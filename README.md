@@ -35,7 +35,7 @@ Once installed, RP Buddy works automatically in the background. Chat messages in
 ### Configuration
 
 Access the plugin's configuration menu through:
-- `/rpbuddy` command in chat, or
+- `/pmycommand` command in chat, or
 - The plugin's entry in the Dalamud Plugin Installer
 
 ## Development
