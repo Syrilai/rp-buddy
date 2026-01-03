@@ -19,6 +19,7 @@ RP Buddy automatically recolors chat messages based on roleplaying conventions:
 ### "Improved" Indicators for continued/done markers
 You are part of those who like to write *very* long roleplay? Then this might be (or not) for you.
 This one is easier shown than written down.
+
 ![preview of improved indicators](https://github.com/Syrilai/rp-buddy/blob/master/img/030543_QUKbJsT0MF.png?raw=true)
 
 ### Vertical Lines for changes in the scenery or such
