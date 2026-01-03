@@ -1,23 +1,18 @@
-﻿using System;
+using System;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
-using Lumina.Excel.Sheets;
 
 namespace RpBuddy.Windows;
 
 public class MainWindow : Window, IDisposable
 {
-    private readonly string goatImagePath;
     private readonly Plugin plugin;
 
-    // We give this window a hidden ID using ##.
-    // The user will see "My Amazing Window" as window title,
-    // but for ImGui the ID is "My Amazing Window##With a hidden ID"
-    public MainWindow(Plugin plugin, string goatImagePath)
-        : base("My Amazing Window##With a hidden ID", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
+    public MainWindow(Plugin plugin)
+        : base("RP Buddy Introduction##introduction", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
     {
         SizeConstraints = new WindowSizeConstraints
         {
@@ -25,7 +20,6 @@ public class MainWindow : Window, IDisposable
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
         };
 
-        this.goatImagePath = goatImagePath;
         this.plugin = plugin;
     }
 
@@ -33,8 +27,6 @@ public class MainWindow : Window, IDisposable
 
     public override void Draw()
     {
-        ImGui.Text($"The random config bool is {plugin.Configuration.SomePropertyToBeSavedAndWithADefault}");
-
         if (ImGui.Button("Show Settings"))
         {
             plugin.ToggleConfigUi();
@@ -42,33 +34,10 @@ public class MainWindow : Window, IDisposable
 
         ImGui.Spacing();
 
-        // Normally a BeginChild() would have to be followed by an unconditional EndChild(),
-        // ImRaii takes care of this after the scope ends.
-        // This works for all ImGui functions that require specific handling, examples are BeginTable() or Indent().
-        using (var child = ImRaii.Child("SomeChildWithAScrollbar", Vector2.Zero, true))
+        using (var child = ImRaii.Child("IntroductionText", Vector2.Zero, true))
         {
-            // Check if this child is drawing
             if (child.Success)
             {
-                ImGui.Text("Have a goat:");
-                var goatImage = Plugin.TextureProvider.GetFromFile(goatImagePath).GetWrapOrDefault();
-                if (goatImage != null)
-                {
-                    using (ImRaii.PushIndent(55f))
-                    {
-                        ImGui.Image(goatImage.Handle, goatImage.Size);
-                    }
-                }
-                else
-                {
-                    ImGui.Text("Image not found.");
-                }
-
-                ImGuiHelpers.ScaledDummy(20.0f);
-
-                // Example for other services that Dalamud provides.
-                // PlayerState provides a wrapper filled with information about the player character.
-
                 var playerState = Plugin.PlayerState;
                 if (!playerState.IsLoaded)
                 {
@@ -82,20 +51,33 @@ public class MainWindow : Window, IDisposable
                     return;
                 }
 
-                // If you want to see the Macro representation of this SeString use `.ToMacroString()`
-                // More info about SeStrings: https://dalamud.dev/plugin-development/sestring/
-                ImGui.Text($"Our current job is ({playerState.ClassJob.RowId}) '{playerState.ClassJob.Value.Abbreviation}' with level {playerState.Level}");
-
-                // Example for querying Lumina, getting the name of our current area.
-                var territoryId = Plugin.ClientState.TerritoryType;
-                if (Plugin.DataManager.GetExcelSheet<TerritoryType>().TryGetRow(territoryId, out var territoryRow))
-                {
-                    ImGui.Text($"We are currently in ({territoryId}) '{territoryRow.PlaceName.Value.Name}'");
-                }
-                else
-                {
-                    ImGui.Text("Invalid territory.");
-                }
+                ImGuiHelpers.CompileSeStringWrapped("Here is what RP Buddy currently offers:\n\n" +
+                    "• Adds an RP Icon in front of Player Names\n" +
+                    "\\<<icon(127)>John Fantasy\\> Epic.\n\n" +
+                    "• Treat Say as an Emote Chat\n" +
+                    "<color(0xFFFFFF)>\\<John Fantasy\\> \"Those are some nice flowers you have there\", as he glances a table over.<color(stackcolor)>\n" +
+                    "\n" +
+                    "<color(0xFFFFFF)>\\<John Fantasy\\> \"Those are some nice flowers you have there\"<color(0xFF94C0FF)>, as he glances a table over.<color(stackcolor)>\n\n" +
+                    "• Color parts of messages differently based on what it is (Actual colors are based on your log colors)\n" +
+                    "<color(0xFF94C0FF)>John Fantasy glances out of the window, looking at the sunset. \"Another _peaceful_ day coming to an end...\", he says and breathes out. ((It is late now, it might be time I have to end here for now))<color(stackcolor)>\n" +
+                    "\n" +
+                    "<color(0xFF94C0FF)><icon(127)>John Fantasy glances out of the window, looking at the sunset. <color(stackcolor)><color(0xFFFFFF)>\"Another <italic(1)>peaceful<italic(0)> day coming to an end...\"<color(stackcolor)><color(0xFF94C0FF)>, he says and breathes out. <color(stackcolor)><color(0xCCCCCC)>((It is late now, it might be time I have to end here for now))<color(stackcolor)>\n" +
+                    "Here is what counts as what:\n" +
+                    " Speech  \"Text\", \"Text with <italic(1)>_emphasis_<italic(0)>\"\n" +
+                    " Action  <color(0xFF94C0FF)>\\<Text\\><color(stackcolor)>, <color(0xFF94C0FF)>*Text*<color(stackcolor)>\n" +
+                    " OOC  <color(0xCCCCCC)>[Text]<color(stackcolor)>, <color(0xCCCCCC)>[[Text]]<color(stackcolor)>, <color(0xCCCCCC)>(Text)<color(stackcolor)>, <color(0xCCCCCC)>((Text))<color(stackcolor)>\n\n" +
+                    "• \"Improved\" Indicators for continued/done markers\n" +
+                    " Continued\n" +
+                    "  (c)  <color(0xCCCCCC)>(c)<color(stackcolor)> <color(0xFD6918)><color(stackcolor)>\n" +
+                    "  (1/5)  <color(0xCCCCCC)>(1/5)<color(stackcolor)> <color(0xFD6918)><color(stackcolor)>\n" +
+                    " Done\n" +
+                    "  (d)  <color(0xCCCCCC)>(d)<color(stackcolor)> <color(0x18FD23)>✓<color(stackcolor)>\n" +
+                    "  (5/5)  <color(0xCCCCCC)>(5/5)<color(stackcolor)> <color(0x18FD23)>✓<color(stackcolor)>\n\n" +
+                    "• Vertical Lines for changes in the scenery or such\n" +
+                    "<color(0xFFFFFF)>\\<John Fantasy\\> | As the snow starts falling more violently, the trees turn whiter and whiter.<color(stackcolor)>\n" +
+                    "\n" +
+                    "<color(0xFFFFFF)>\\<John Fantasy\\> <color(stackcolor)><icon(106)>\n" +
+                    "<color(0xFF94C0FF)>  As the snow starts falling more violently, the trees turn whiter and whiter.<color(stackcolor)>");
             }
         }
     }

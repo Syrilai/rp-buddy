@@ -1,4 +1,4 @@
-﻿using Dalamud.Configuration;
+using Dalamud.Configuration;
 using System;
 
 namespace RpBuddy;
@@ -8,8 +8,10 @@ public class Configuration : IPluginConfiguration
 {
     public int Version { get; set; } = 0;
 
-    public bool IsConfigWindowMovable { get; set; } = true;
-    public bool SomePropertyToBeSavedAndWithADefault { get; set; } = true;
+    public bool RequiresRoleplayingTag { get; set; } = true;
+    public bool TreatSayAsEmote { get; set; } = true;
+    public bool TreatSayAsEmoteForEveryone { get; set; } = false;
+    public bool ShowRoleplayTagInChat { get; set; } = true;
 
     // The below exists just to make saving less cumbersome
     public void Save()

@@ -1,6 +1,7 @@
-﻿using System;
+using System;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 
 namespace RpBuddy.Windows;
@@ -9,16 +10,15 @@ public class ConfigWindow : Window, IDisposable
 {
     private readonly Configuration configuration;
 
-    // We give this window a constant ID using ###.
-    // This allows for labels to be dynamic, like "{FPS Counter}fps###XYZ counter window",
-    // and the window ID will always be "###XYZ counter window" for ImGui
-    public ConfigWindow(Plugin plugin) : base("A Wonderful Configuration Window###With a constant ID")
+    public ConfigWindow(Plugin plugin) : base("RP Buddy Configuration###config")
     {
-        Flags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar |
-                ImGuiWindowFlags.NoScrollWithMouse;
+        Flags = ImGuiWindowFlags.NoCollapse;
 
-        Size = new Vector2(232, 90);
-        SizeCondition = ImGuiCond.Always;
+        SizeConstraints = new WindowSizeConstraints
+        {
+            MinimumSize = new Vector2(300, 230),
+            MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
+        };
 
         configuration = plugin.Configuration;
     }
@@ -27,32 +27,56 @@ public class ConfigWindow : Window, IDisposable
 
     public override void PreDraw()
     {
-        // Flags must be added or removed before Draw() is being called, or they won't apply
-        if (configuration.IsConfigWindowMovable)
-        {
-            Flags &= ~ImGuiWindowFlags.NoMove;
-        }
-        else
-        {
-            Flags |= ImGuiWindowFlags.NoMove;
-        }
+        Flags &= ~ImGuiWindowFlags.NoMove;
     }
 
     public override void Draw()
     {
-        // Can't ref a property, so use a local copy
-        var configValue = configuration.SomePropertyToBeSavedAndWithADefault;
-        if (ImGui.Checkbox("Random Config Bool", ref configValue))
+        var requiresRoleplayingTag = configuration.RequiresRoleplayingTag;
+        if (ImGui.Checkbox("Requires Roleplaying Tag", ref requiresRoleplayingTag))
         {
-            configuration.SomePropertyToBeSavedAndWithADefault = configValue;
-            // Can save immediately on change if you don't want to provide a "Save and Close" button
+            configuration.RequiresRoleplayingTag = requiresRoleplayingTag;
             configuration.Save();
         }
 
-        var movable = configuration.IsConfigWindowMovable;
-        if (ImGui.Checkbox("Movable Config Window", ref movable))
+        var treatSayAsEmote = configuration.TreatSayAsEmote;
+        if (ImGui.Checkbox("Treat Say as Emote", ref treatSayAsEmote))
         {
-            configuration.IsConfigWindowMovable = movable;
+            configuration.TreatSayAsEmote = treatSayAsEmote;
+            configuration.Save();
+        }
+
+        var treatSayAsEmoteForEveryone = configuration.TreatSayAsEmoteForEveryone;
+        if (requiresRoleplayingTag | !treatSayAsEmote)
+        {
+            ImGui.BeginDisabled();
+            // We show it as false because the top settings overwrite this
+            treatSayAsEmoteForEveryone = false;
+        }
+        if (ImGui.Checkbox("Treat Say as Emote for everyone", ref treatSayAsEmoteForEveryone))
+        {
+            configuration.TreatSayAsEmoteForEveryone = treatSayAsEmoteForEveryone;
+            configuration.Save();
+        }
+        if (requiresRoleplayingTag | !treatSayAsEmote)
+        {
+            ImGui.EndDisabled();
+            ImGui.BeginGroup();
+            ImGui.Text("This option has been disabled due to:");
+            if (requiresRoleplayingTag)
+            {
+                ImGui.BulletText("Requires Roleplaying Tag");
+            }
+            if (!treatSayAsEmote)
+            {
+                ImGui.BulletText("Treat Say as Emote");
+            }
+        }
+
+        var showRoleplayTagInChat = configuration.ShowRoleplayTagInChat;
+        if (ImGui.Checkbox("Show Roleplay Tag in Chat", ref showRoleplayTagInChat))
+        {
+            configuration.ShowRoleplayTagInChat = showRoleplayTagInChat;
             configuration.Save();
         }
     }
