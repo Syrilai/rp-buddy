@@ -109,6 +109,12 @@ public sealed class Plugin : IDalamudPlugin
             return;
         }
 
+        if (message.Payloads.Any(p => p is not TextPayload))
+        {
+            // temporary fix as it lowkey breaks existing paylods until i can be bothered to fix it
+            return;
+        }
+
         var isSayChat = type == XivChatType.Say;
         var isRoleplayingStatus = false;
 
