@@ -1,15 +1,31 @@
 # RP Buddy
 
-A Dalamud plugin for FINAL FANTASY XIV designed to enhance the roleplaying experience by providing visual tools for chat customization.
+A Dalamud plugin designed to enhance the roleplaying experience by providing visual tools for chat customization.
 
 ## Features
 
+### RP Icon in Chat
+For ease of access to see who around you is roleplaying, RP Buddy shows the RP Icon next to player names in chat if they are in the Roleplaying status.
+
+### Treat Say as an Emote Chat
+This turns the /say Chat into the same thing as if someone would type their message as custom emote.
+
 ### Chat Recoloring
 RP Buddy automatically recolors chat messages based on roleplaying conventions:
-- **Quoted text** (text within quotation marks `"..."`) - Recolored to distinguish spoken dialogue
-- **Emoted actions** (text within asterisks `*...*`) - Recolored to distinguish character actions and emotes
+- **Quoted text** (text within quotation marks `"..."`) - Recolored to distinguish spoken dialogue (Uses the say log color)
+- **Emoted actions** (text within asterisks `*...*` or less than/greater than `<...>`) - Recolored to distinguish character actions and emotes (Uses the emote log color)
+- **OOC Text** (text within `[...]`, `[[...]]`, `(...)`, `((...))`) - Recolored to distinguish out of character stuff (Uses the echo log color)
 
-This visual distinction helps roleplayers quickly identify dialogue versus actions in busy chat scenarios, making it easier to follow ongoing roleplay scenes.
+### "Improved" Indicators for continued/done markers
+You are part of those who like to write *very* long roleplay? Then this might be (or not) for you.
+This one is easier shown than written down.
+![preview of improved indicators](https://github.com/syrilai/rp-buddy/blob/main/img/030543_QUKbJsT0MF.png?raw=true)
+
+### Vertical Lines for changes in the scenery or such
+Can be used for anything, really. When you start your message (or emote) with a `|`, then it moves the entire message onto a new line.
+
+---
+All of these things can be seen in the in-game introduction as well, more visually. Or you try them out yourself, no one is going to stop you.
 
 ## Installation
 
@@ -21,50 +37,8 @@ This visual distinction helps roleplayers quickly identify dialogue versus actio
 ### Installing the Plugin
 
 1. Launch the game with Dalamud enabled
-2. Open the Dalamud Plugin Installer using `/xlplugins` in chat
-3. Search for "RP Buddy" in the available plugins list
-4. Click "Install" to add the plugin
-
-## Usage
-
-Once installed, RP Buddy works automatically in the background. Chat messages in supported channels will be recolored based on the following patterns:
-
-- Text enclosed in `"quotes"` will be highlighted as dialogue
-- Text enclosed in `*asterisks*` will be highlighted as actions/emotes
-
-### Configuration
-
-Access the plugin's configuration menu through:
-- `/pmycommand` command in chat, or
-- The plugin's entry in the Dalamud Plugin Installer
-
-## Development
-
-### Building from Source
-
-1. Clone this repository
-2. Open `RpBuddy.sln` in [Visual Studio 2022](https://visualstudio.microsoft.com) or [JetBrains Rider](https://www.jetbrains.com/rider/)
-3. Build the solution (Debug or Release)
-4. The compiled plugin will be at `RpBuddy/bin/x64/Debug/RpBuddy.dll`
-
-### Development Prerequisites
-
-* .NET Core 8 SDK
-* XIVLauncher with Dalamud installed in default directories
-  * Custom Dalamud path can be set via `DALAMUD_HOME` environment variable
-
-### Testing in Development
-
-1. Build the plugin
-2. Use `/xlsettings` in-game to open Dalamud Settings
-3. Go to `Experimental` tab and add the path to `RpBuddy.dll` in Dev Plugin Locations
-4. Use `/xlplugins` → `Dev Tools` → `Installed Dev Plugins` to enable RP Buddy
-5. Test the plugin functionality
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit pull requests or open issues for bugs and feature requests.
-
-## License
-
-This project is licensed under the AGPL-3.0-or-later license. See [LICENSE.md](LICENSE.md) for details.
+2. Open your Dalamud Settings using `/xlsettings`
+3. Add the following URL as a custom plugin repository: `https://raw.githubusercontent.com/Syrilai/rp-buddy-repo/main/pluginmaster.json` and save
+4. Open the Dalamud Plugin Installer using `/xlplugins` in chat
+5. Search for "RP Buddy" in the available plugins list
+6. Click "Install" to add the plugin
