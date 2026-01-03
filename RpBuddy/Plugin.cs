@@ -65,6 +65,50 @@ public sealed class Plugin : IDalamudPlugin
 
     private void ChatGui_ChatMessageV2(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled)
     {
+        var inAllowedChatType = new List<XivChatType>()
+        {
+            // Public Chats
+            XivChatType.Say,
+            XivChatType.Yell,
+            XivChatType.CustomEmote,
+
+            // Party/Alliance Chats
+            XivChatType.Party,
+            XivChatType.CrossParty,
+            XivChatType.Alliance,
+
+            // Free Company, although maybe rare but I don't want to take chances
+            XivChatType.FreeCompany,
+
+            // Literally all Cross-World Linkshells and Linkshells
+            XivChatType.CrossLinkShell1,
+            XivChatType.CrossLinkShell2,
+            XivChatType.CrossLinkShell3,
+            XivChatType.CrossLinkShell4,
+            XivChatType.CrossLinkShell5,
+            XivChatType.CrossLinkShell6,
+            XivChatType.CrossLinkShell7,
+            XivChatType.CrossLinkShell8,
+            XivChatType.Ls1,
+            XivChatType.Ls2,
+            XivChatType.Ls3,
+            XivChatType.Ls4,
+            XivChatType.Ls5,
+            XivChatType.Ls6,
+            XivChatType.Ls7,
+            XivChatType.Ls8,
+            // (at this point it should be a blacklist and not a whitelist man..)
+
+            // Tells
+            XivChatType.TellIncoming,
+            XivChatType.TellOutgoing,
+        };
+
+        if (!inAllowedChatType.Contains(type))
+        {
+            return;
+        }
+
         var isSayChat = type == XivChatType.Say;
         var isRoleplayingStatus = false;
 
