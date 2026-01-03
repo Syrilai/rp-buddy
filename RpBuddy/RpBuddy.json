@@ -1,12 +1,12 @@
 {
-  "Author": "your name here",
-  "Name": "RP Buddy",
-  "Punchline": "A short one-liner that shows up in /xlplugins.",
-  "Description": "A description that shows up in /xlplugins. List any major slash-command(s).",
-  "ApplicableVersion": "any",
-  "Tags": [
-    "sample",
-    "plugin",
-    "goats"
-  ]
+    "Author": "Syrilai",
+    "Name": "RP Buddy",
+    "Punchline": "A tiny helper in your RP endeavours",
+    "Description": "A tiny helper in your RP endeavours. You can read a \"short\" introduction with /rpbuddy.",
+    "ApplicableVersion": "any",
+    "Tags": [
+        "roleplay",
+        "rp",
+        "colored chat"
+    ]
 }
