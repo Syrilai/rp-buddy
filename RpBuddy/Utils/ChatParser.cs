@@ -128,10 +128,10 @@ namespace RpBuddy.Utils
             return (textOnly.ToString(), positionMap);
         }
 
-        private Regex Done = DoneRegex();
+        private readonly Regex done = DoneRegex();
         [GeneratedRegex(@"\(d\)|\((\d+)/\1\)")]
         private static partial Regex DoneRegex();
-        private Regex Continued = ContinuedRegex();
+        private readonly Regex continued = ContinuedRegex();
         [GeneratedRegex(@"\(c\)|\(\d+/\d+\)")]
         private static partial Regex ContinuedRegex();
 
@@ -142,7 +142,7 @@ namespace RpBuddy.Utils
 
             while (i < textOnly.Length)
             {
-                var doneMatch = Done.Match(textOnly, i);
+                var doneMatch = done.Match(textOnly, i);
                 if (doneMatch.Success && doneMatch.Index == i)
                 {
                     matches.Add((i, i + doneMatch.Length, MatchType.Done));
@@ -150,7 +150,7 @@ namespace RpBuddy.Utils
                     continue;
                 }
 
-                var continuedMatch = Continued.Match(textOnly, i);
+                var continuedMatch = continued.Match(textOnly, i);
                 if (continuedMatch.Success && continuedMatch.Index == i)
                 {
                     matches.Add((i, i + continuedMatch.Length, MatchType.Continued));
