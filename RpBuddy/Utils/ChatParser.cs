@@ -3,6 +3,7 @@ using Dalamud.Plugin.Services;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace RpBuddy.Utils
 {
@@ -55,7 +56,7 @@ namespace RpBuddy.Utils
         Done
     }
 
-    internal class ChatParser
+    internal partial class ChatParser
     {
         private readonly IPluginLog _log;
 
@@ -127,14 +128,21 @@ namespace RpBuddy.Utils
             return (textOnly.ToString(), positionMap);
         }
 
+        private Regex Done = DoneRegex();
+        [GeneratedRegex(@"\(d\)|\((\d+)/\1\)")]
+        private static partial Regex DoneRegex();
+        private Regex Continued = ContinuedRegex();
+        [GeneratedRegex(@"\(c\)|\(\d+/\d+\)")]
+        private static partial Regex ContinuedRegex();
+
         private List<(int StartPos, int EndPos, MatchType Type)> FindRpMatches(string textOnly)
         {
             var matches = new List<(int StartPos, int EndPos, MatchType Type)>();
             var i = 0;
-            
+
             while (i < textOnly.Length)
             {
-                var doneMatch = Patterns.Done.Match(textOnly, i);
+                var doneMatch = Done.Match(textOnly, i);
                 if (doneMatch.Success && doneMatch.Index == i)
                 {
                     matches.Add((i, i + doneMatch.Length, MatchType.Done));
@@ -142,7 +150,7 @@ namespace RpBuddy.Utils
                     continue;
                 }
 
-                var continuedMatch = Patterns.Continued.Match(textOnly, i);
+                var continuedMatch = Continued.Match(textOnly, i);
                 if (continuedMatch.Success && continuedMatch.Index == i)
                 {
                     matches.Add((i, i + continuedMatch.Length, MatchType.Continued));
@@ -543,5 +551,7 @@ namespace RpBuddy.Utils
             }
             return sb.ToString();
         }
+
+        
     }
 }
