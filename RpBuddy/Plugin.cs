@@ -167,7 +167,7 @@ public sealed class Plugin : IDalamudPlugin
 
             if (treatAsEmoteChatCheck)
             {
-                formattedToken.Add(new MacroTagToken("color(gnum15)"));
+                formattedToken.Add(new MacroTagToken($"color(gnum{(int)GlobalExpressions.ColorEmoteUser})"));
             }
 
             var processedTokens = parser.ApplyRpFormatting(tokens);
