@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Game.Text;
@@ -170,6 +171,20 @@ public class ConfigWindow : Window, IDisposable
         if (ImGui.IsItemHovered())
         {
             ImGui.SetTooltip("Show the RP icon next to player names in chat");
+        }
+
+        ImGui.Separator();
+        ImGui.TextColored(new Vector4(1, 0, 0, 1), "Risky Options Ahead");
+
+        var alwaysAssumeLocalPlayer = configuration.AlwaysAssumeLocalPlayer;
+        if (ImGui.Checkbox("If no PlayerPayload is found, always assume it's the LocalPlayer", ref alwaysAssumeLocalPlayer))
+        {
+            configuration.AlwaysAssumeLocalPlayer = alwaysAssumeLocalPlayer;
+            configuration.Save();
+        }
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip("This can cause mischief in your chat, but can help if other plugins modify the sender payload");
         }
     }
 

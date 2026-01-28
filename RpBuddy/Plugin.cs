@@ -64,6 +64,10 @@ public sealed class Plugin : IDalamudPlugin
 
     private void ChatGui_ChatMessageV3(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled)
     {
+        if (isHandled)
+        {
+            return;
+        }
         // Check if chat type is enabled
         if (!Configuration.IsChatTypeEnabled(type))
         {
@@ -89,7 +93,7 @@ public sealed class Plugin : IDalamudPlugin
         else
         {
             var lp = ObjectTable.LocalPlayer;
-            if (lp != null && lp.Name.TextValue == sender.TextValue)
+            if ((lp != null && lp.Name.TextValue == sender.TextValue) || (Configuration.AlwaysAssumeLocalPlayer && lp != null))
             {
                 var playerCharacter = PlayerManager.GetPlayerCharacterFromPayload(new PlayerPayload(lp.Name.TextValue, lp.HomeWorld.RowId));
                 if (playerCharacter != null)
@@ -189,6 +193,8 @@ public sealed class Plugin : IDalamudPlugin
         PluginInterface.UiBuilder.Draw -= WindowSystem.Draw;
         PluginInterface.UiBuilder.OpenConfigUi -= ToggleConfigUi;
         PluginInterface.UiBuilder.OpenMainUi -= ToggleMainUi;
+
+        ChatGui.ChatMessage -= ChatGui_ChatMessageV3;
         
         WindowSystem.RemoveAllWindows();
 

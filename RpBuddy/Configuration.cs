@@ -34,6 +34,9 @@ public class Configuration : IPluginConfiguration
         };
     }
 
+    // Risky
+    public bool AlwaysAssumeLocalPlayer {  get; set; } = false;
+
     public bool IsChatTypeEnabled(XivChatType chatType)
     {
         return EnabledChatTypes.Contains((int)chatType);
