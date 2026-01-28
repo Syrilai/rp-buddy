@@ -189,7 +189,7 @@ public class ConfigWindow : Window, IDisposable
                     foreach (var (chatType, name, colorIndex) in chatTypes)
                     {
                         var isEnabled = configuration.IsChatTypeEnabled(chatType);
-                        if (ImGui.Checkbox("", ref isEnabled))
+                        if (ImGui.Checkbox($"##{chatType}", ref isEnabled))
                         {
                             configuration.SetChatTypeEnabled(chatType, isEnabled);
                             configuration.Save();

@@ -67,14 +67,11 @@ public sealed class Plugin : IDalamudPlugin
         // Check if chat type is enabled
         if (!Configuration.IsChatTypeEnabled(type))
         {
-            Log.Debug("Aborting: {channel} is not enabled", type);
             return;
         }
 
         var macroSender = NativeStringConverter.SeStringToMacroCode(sender);
         var macroMessage = NativeStringConverter.SeStringToMacroCode(message);
-
-        Log.Debug("(old) {sender}: {message}", macroSender, macroMessage);
 
         var isSayChat = type == XivChatType.Say;
         var isRoleplaying = false;
@@ -105,7 +102,6 @@ public sealed class Plugin : IDalamudPlugin
         // Configuration checks
         if (Configuration.RequiresRoleplayingTag && !isRoleplaying)
         {
-            Log.Debug("Aborting: Requires RP Status but it is not available");
             return;
         }
 
@@ -180,8 +176,6 @@ public sealed class Plugin : IDalamudPlugin
 
             macroMessage = parser.SerializeTokens(formattedToken);
         }
-
-        Log.Debug("(new) {sender}: {message}", macroSender, macroMessage);
 
         if (hasChanges)
         {
