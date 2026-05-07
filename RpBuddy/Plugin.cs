@@ -1,15 +1,17 @@
+using Dalamud.Game.Chat;
+using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.Command;
+using Dalamud.Game.Text;
+using Dalamud.Game.Text.SeStringHandling;
+using Dalamud.Game.Text.SeStringHandling.Payloads;
+using Dalamud.Interface.Windowing;
 using Dalamud.IoC;
 using Dalamud.Plugin;
-using Dalamud.Interface.Windowing;
 using Dalamud.Plugin.Services;
+using RpBuddy.Utils;
 using RpBuddy.Windows;
-using Dalamud.Game.Text.SeStringHandling;
-using Dalamud.Game.Text;
-using Dalamud.Game.Text.SeStringHandling.Payloads;
 using System.Collections.Generic;
 using System.Linq;
-using RpBuddy.Utils;
 using System.Text;
 
 namespace RpBuddy;
@@ -52,7 +54,7 @@ public sealed class Plugin : IDalamudPlugin
 
         PluginInterface.UiBuilder.OpenMainUi += ToggleMainUi;
 
-        ChatGui.ChatMessage += ChatGui_ChatMessageV3;
+        ChatGui.ChatMessage += ChatGui_ChatMessage;
 
         Log.Information($"Plugin created");
     }
@@ -62,38 +64,31 @@ public sealed class Plugin : IDalamudPlugin
         return new Lumina.Text.SeStringBuilder();
     }
 
-    private void ChatGui_ChatMessageV3(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled)
-    {
-        if (isHandled)
-        {
+    private void ChatGui_ChatMessage(IHandleableChatMessage message) {
+        if (message.IsHandled)
             return;
-        }
-        // Check if chat type is enabled
-        if (!Configuration.IsChatTypeEnabled(type))
-        {
+
+        if (!Configuration.IsChatTypeEnabled(message.LogKind))
             return;
-        }
 
-        var macroSender = NativeStringConverter.SeStringToMacroCode(sender);
-        var macroMessage = NativeStringConverter.SeStringToMacroCode(message);
+        var macroSender = NativeStringConverter.SeStringToMacroCode(message.Sender);
+        var macroMessage = NativeStringConverter.SeStringToMacroCode(message.Message);
 
-        var isSayChat = type == XivChatType.Say;
+        var isSayChat = message.LogKind == XivChatType.Say;
         var isRoleplaying = false;
         var hasChanges = false;
 
-        var playerPayload = sender.Payloads.OfType<PlayerPayload>().FirstOrDefault();
-        if (playerPayload != null)
-        {
+        var playerPayload = message.Sender.Payloads.OfType<PlayerPayload>().FirstOrDefault();
+        if (playerPayload != null) {
             var playerCharacter = PlayerManager.GetPlayerCharacterFromPayload(playerPayload);
-            if (playerCharacter != null)
-            {
+            if (playerCharacter != null) {
                 isRoleplaying = playerCharacter.OnlineStatus.RowId == 22;
             }
         }
         else
         {
             var lp = ObjectTable.LocalPlayer;
-            if ((lp != null && lp.Name.TextValue == sender.TextValue) || (Configuration.AlwaysAssumeLocalPlayer && lp != null))
+            if ((lp != null && lp.Name.TextValue == message.OriginalSender.ExtractText()) || (Configuration.AlwaysAssumeLocalPlayer && lp != null))
             {
                 var playerCharacter = PlayerManager.GetPlayerCharacterFromPayload(new PlayerPayload(lp.Name.TextValue, lp.HomeWorld.RowId));
                 if (playerCharacter != null)
@@ -118,16 +113,16 @@ public sealed class Plugin : IDalamudPlugin
         // Check for pipe prefix - handle leading whitespace properly
         var trimmedMessage = macroMessage.TrimStart();
         var startsWithPipe = trimmedMessage.StartsWith("||") || trimmedMessage.StartsWith("|");
-    
+
         if (startsWithPipe)
         {
             if (trimmedMessage.StartsWith("||"))
             {
-                    macroMessage = trimmedMessage.Substring(2).TrimStart();
+                macroMessage = trimmedMessage.Substring(2).TrimStart();
             }
             else if (trimmedMessage.StartsWith("|"))
             {
-                    macroMessage = trimmedMessage.Substring(1).TrimStart();
+                macroMessage = trimmedMessage.Substring(1).TrimStart();
             }
         }
 
@@ -183,8 +178,8 @@ public sealed class Plugin : IDalamudPlugin
 
         if (hasChanges)
         {
-            sender = NativeStringConverter.MacroCodeToSeString(macroSender);
-            message = NativeStringConverter.MacroCodeToSeString(macroMessage);
+            message.Sender = NativeStringConverter.MacroCodeToSeString(macroSender);
+            message.Message = NativeStringConverter.MacroCodeToSeString(macroMessage);
         }
     }
 
@@ -194,7 +189,7 @@ public sealed class Plugin : IDalamudPlugin
         PluginInterface.UiBuilder.OpenConfigUi -= ToggleConfigUi;
         PluginInterface.UiBuilder.OpenMainUi -= ToggleMainUi;
 
-        ChatGui.ChatMessage -= ChatGui_ChatMessageV3;
+        ChatGui.ChatMessage -= ChatGui_ChatMessage;
         
         WindowSystem.RemoveAllWindows();
 

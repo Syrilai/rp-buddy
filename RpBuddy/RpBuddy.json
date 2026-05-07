@@ -2,11 +2,13 @@
     "Author": "Syrilai",
     "Name": "RP Buddy",
     "Punchline": "A tiny helper in your RP endeavours",
-    "Description": "A tiny helper in your RP endeavours. You can read a \"short\" introduction with /rpbuddy.",
+    "Description": "RP Buddy helps you in your RP endeavours by providing various different utilities like coloring chat messages according to context, adding an RP icon next to names, and more.",
     "ApplicableVersion": "any",
     "Tags": [
         "roleplay",
         "rp",
         "colored chat"
-    ]
+    ],
+    "RepoUrl": "https://github.com/Syrilai/rp-buddy",
+    "AcceptsFeedback": true
 }
