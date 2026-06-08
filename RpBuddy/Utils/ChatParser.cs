@@ -358,6 +358,34 @@ namespace RpBuddy.Utils
             }
         }
 
+        public static string GetColorForMatchType(MatchType matchType)
+        {
+            var plugin = Plugin.Instance;
+
+            if (plugin.IsChatTwoEnabled)
+            {
+                return matchType switch
+                {
+                    MatchType.Quote => ChatColors.ColorSay.ToString(),
+                    MatchType.Action => ChatColors.ColorEmoteUser.ToString(),
+                    MatchType.OOC => ChatColors.ColorTell.ToString(),
+                    MatchType.Continued
+                        or MatchType.Done => ChatColors.ColorEcho.ToString()
+                };
+            }
+            else
+            {
+                return matchType switch
+                {
+                    MatchType.Quote => $"gnum{(int)GlobalExpressions.ColorSay}",
+                    MatchType.Action => $"gnum{(int)GlobalExpressions.ColorEmoteUser}",
+                    MatchType.OOC => $"gnum{(int)GlobalExpressions.ColorTell}",
+                    MatchType.Continued
+                        or MatchType.Done => $"gnum{(int)GlobalExpressions.ColorEcho}"
+                };
+            }
+        }
+
         private void AddFormattedMatch(
             List<MacroToken> tokens,
             List<TextPosition> positionMap,
@@ -369,25 +397,25 @@ namespace RpBuddy.Utils
             switch (match.Type)
             {
                 case MatchType.Quote:
-                    result.Add(new MacroTagToken($"color(gnum{(int)GlobalExpressions.ColorSay})"));
+                    result.Add(new MacroTagToken($"color({GetColorForMatchType(match.Type)})"));
                     AddQuoteWithItalics(tokens, positionMap, match, textOnly, result, processedTokens);
                     result.Add(new MacroTagToken("color(stackcolor)"));
                     break;
 
                 case MatchType.Action:
-                    result.Add(new MacroTagToken($"color(gnum{(int)GlobalExpressions.ColorEmoteUser})"));
+                    result.Add(new MacroTagToken($"color({GetColorForMatchType(match.Type)})"));
                     AddTokensForMatch(tokens, positionMap, match, result, processedTokens);
                     result.Add(new MacroTagToken("color(stackcolor)"));
                     break;
 
                 case MatchType.OOC:
-                    result.Add(new MacroTagToken($"color(gnum{(int)GlobalExpressions.ColorTell})"));
+                    result.Add(new MacroTagToken($"color({GetColorForMatchType(match.Type)})"));
                     AddTokensForMatch(tokens, positionMap, match, result, processedTokens);
                     result.Add(new MacroTagToken("color(stackcolor)"));
                     break;
 
                 case MatchType.Continued:
-                    result.Add(new MacroTagToken($"color(gnum{(int)GlobalExpressions.ColorEcho})"));
+                    result.Add(new MacroTagToken($"color({GetColorForMatchType(match.Type)})"));
                     AddTokensForMatch(tokens, positionMap, match, result, processedTokens);
                     result.Add(new TextToken(" "));
                     result.Add(new MacroTagToken("color(stackcolor)"));
@@ -397,7 +425,7 @@ namespace RpBuddy.Utils
                     break;
 
                 case MatchType.Done:
-                    result.Add(new MacroTagToken($"color(gnum{(int)GlobalExpressions.ColorEcho})"));
+                    result.Add(new MacroTagToken($"color({GetColorForMatchType(match.Type)})"));
                     AddTokensForMatch(tokens, positionMap, match, result, processedTokens);
                     result.Add(new TextToken(" "));
                     result.Add(new MacroTagToken("color(stackcolor)"));
@@ -496,7 +524,7 @@ namespace RpBuddy.Utils
 
                         if (formatDelim == '*')
                         {
-                            result.Add(new MacroTagToken("edgecolor(gnum13)"));
+                            result.Add(new MacroTagToken($"edgecolor({GetColorForMatchType(MatchType.Quote)})"));
                             AddTokensForMatch(tokens, positionMap, (i + 1, endDelim, match.Type), result, processedTokens);
                             result.Add(new MacroTagToken("edgecolor(stackcolor)"));
                         }

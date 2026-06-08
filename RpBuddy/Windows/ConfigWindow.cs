@@ -107,6 +107,15 @@ public class ConfigWindow : Window, IDisposable
 
     private void DrawGeneralSettings()
     {
+        if (Plugin.Instance.IsChatTwoEnabled)
+        {
+            ImGui.TextColored(new Vector4(1, 0, 0, 1), "Chat2 is enabled. We are using color fallbacks for now.");
+            if (ImGui.Button("Refresh Chat Colors"))
+            {
+                Plugin.Instance.ChatColors.RefreshColors();
+            }
+        }
+
         var requiresRoleplayingTag = configuration.RequiresRoleplayingTag;
         if (ImGui.Checkbox("Requires Roleplaying Tag", ref requiresRoleplayingTag))
         {

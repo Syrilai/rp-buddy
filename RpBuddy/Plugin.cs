@@ -8,6 +8,7 @@ using Dalamud.Interface.Windowing;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
+using FFXIVClientStructs;
 using RpBuddy.Utils;
 using RpBuddy.Windows;
 using System.Collections.Generic;
@@ -24,6 +25,9 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static IPluginLog Log { get; private set; } = null!;
     [PluginService] internal static IChatGui ChatGui { get; private set; } = null!;
     [PluginService] internal static IObjectTable ObjectTable { get; private set; } = null!;
+    [PluginService] internal static IGameConfig GameConfig { get; private set; } = null!;
+
+    public bool IsChatTwoEnabled = false;
 
     private const string CommandName = "/rpbuddy";
 
@@ -33,15 +37,25 @@ public sealed class Plugin : IDalamudPlugin
     private ConfigWindow ConfigWindow { get; init; }
     private MainWindow MainWindow { get; init; }
 
+    public ChatColors ChatColors;
+
+    public static Plugin Instance = null!;
+
     public Plugin()
     {
+        Instance = this;
+
         Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
 
         ConfigWindow = new ConfigWindow(this);
         MainWindow = new MainWindow(this);
 
+        ChatColors = new();
+
         WindowSystem.AddWindow(ConfigWindow);
         WindowSystem.AddWindow(MainWindow);
+
+        PluginInterface.ActivePluginsChanged += ActivePluginsChanged;
 
         CommandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
         {
@@ -57,6 +71,35 @@ public sealed class Plugin : IDalamudPlugin
         ChatGui.ChatMessage += ChatGui_ChatMessage;
 
         Log.Information($"Plugin created");
+
+        CheckCompatibility();
+    }
+
+    internal void ActivePluginsChanged(IActivePluginsChangedEventArgs args)
+    {
+        if (args.AffectedInternalNames.Any(i => i.Equals("ChatTwo"))) {
+            var newValue = args.Kind switch
+            {
+                PluginListInvalidationKind.Unloaded => false,
+                PluginListInvalidationKind.Loaded 
+                    or PluginListInvalidationKind.Update
+                    or PluginListInvalidationKind.AutoUpdate => true,
+                _ => false
+            };
+
+            IsChatTwoEnabled = newValue;
+        }
+    }
+
+    internal void CheckCompatibility()
+    {
+        foreach (var installedPlugin in PluginInterface.InstalledPlugins)
+        {
+            if (!installedPlugin.InternalName.Equals("ChatTwo"))
+                continue;
+
+            IsChatTwoEnabled = installedPlugin.IsLoaded;
+        }
     }
 
     internal static Lumina.Text.SeStringBuilder NewSeStringBuilder()
@@ -162,7 +205,7 @@ public sealed class Plugin : IDalamudPlugin
 
             if (treatAsEmoteChatCheck)
             {
-                formattedToken.Add(new MacroTagToken($"color(gnum{(int)GlobalExpressions.ColorEmoteUser})"));
+                formattedToken.Add(new MacroTagToken($"color({ChatParser.GetColorForMatchType(MatchType.Action)})"));
             }
 
             var processedTokens = parser.ApplyRpFormatting(tokens);
@@ -188,6 +231,7 @@ public sealed class Plugin : IDalamudPlugin
         PluginInterface.UiBuilder.Draw -= WindowSystem.Draw;
         PluginInterface.UiBuilder.OpenConfigUi -= ToggleConfigUi;
         PluginInterface.UiBuilder.OpenMainUi -= ToggleMainUi;
+        PluginInterface.ActivePluginsChanged -= ActivePluginsChanged;
 
         ChatGui.ChatMessage -= ChatGui_ChatMessage;
         
