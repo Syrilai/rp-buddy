@@ -19,8 +19,6 @@ public class Configuration : IPluginConfiguration
 
     // Chat Types
     public HashSet<int> EnabledChatTypes { get; set; } = GetDefaultChatTypes();
-
-    public CustomItemCatalog ItemCatalog = new();
     
     public static HashSet<int> GetDefaultChatTypes()
     {

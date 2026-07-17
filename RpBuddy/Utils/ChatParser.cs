@@ -59,9 +59,9 @@ namespace RpBuddy.Utils
     {
         private readonly IPluginLog _log;
 
-        public ChatParser(IPluginLog log)
+        public ChatParser()
         {
-            _log = log;
+            _log = Service<IPluginLog>.Get();
         }
 
         public List<MacroToken> Tokenize(string macroCode)

@@ -7,9 +7,9 @@ using RpBuddy.Addons.Nodes;
 
 namespace RpBuddy.Addons;
 
-public unsafe class ContextMenuWindow : NativeAddon
+public unsafe class ContextMenuAddon : NativeAddon
 {
-    public ContextMenuWindow()
+    public ContextMenuAddon()
     {
         CreateWindowNode = () => new ContextMenuWindowNode();
     }

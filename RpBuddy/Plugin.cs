@@ -22,84 +22,60 @@ using RpBuddy.Inventory;
 
 namespace RpBuddy;
 
+// ReSharper disable once ClassNeverInstantiated.Global
 public sealed class Plugin : IDalamudPlugin
 {
     [PluginService] internal static IDalamudPluginInterface PluginInterface { get; private set; } = null!;
-    [PluginService] internal static ICommandManager CommandManager { get; private set; } = null!;
-    [PluginService] internal static IClientState ClientState { get; private set; } = null!;
-    [PluginService] internal static IPluginLog Log { get; private set; } = null!;
-    [PluginService] internal static IChatGui ChatGui { get; private set; } = null!;
-    [PluginService] internal static IObjectTable ObjectTable { get; private set; } = null!;
-    [PluginService] internal static IGameConfig GameConfig { get; private set; } = null!;
-    [PluginService] internal static IFramework Framework { get; private set; } = null!;
 
     private const string CommandName = "/rpbuddy";
-    public Configuration Configuration { get; init; }
 
-    public readonly WindowSystem WindowSystem = new("RP Buddy");
-    private ConfigWindow ConfigWindow { get; init; }
-    private MainWindow MainWindow { get; init; }
-
-    public static Plugin Instance = null!;
-    
-    public readonly RpInventoryAddon RpInventory;
-    public readonly ContextMenuWindow ContextMenu;
-    private OverlayController OverlayController { get; set; }
-    public ItemTooltipOverlay ItemTooltipOverlay { get; private set; }
-
-    public InventoryBase Inventory;
+    private readonly WindowSystem _windowSystem = new("RP Buddy");
 
     public Plugin()
     {
-        Instance = this;
-        KamiToolKitLibrary.Initialize(PluginInterface);
+        KamiToolKitLibrary.Initialize(PluginInterface, PluginInterface.InternalName);
         
-        #if DEBUG
-        Log.Info("We are running in debug mode!");
-        #endif
+        Shared.ItemCatalog = new CustomItemCatalog();
+        Shared.Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
+        Shared.Inventory = new LocalInventory();
 
-        Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
+        Shared.Windows.Main = new MainWindow(this);
+        Shared.Windows.Config = new ConfigWindow(this);
 
-        ConfigWindow = new ConfigWindow(this);
-        MainWindow = new MainWindow(this);
+        _windowSystem.AddWindow(Shared.Windows.Main);
+        _windowSystem.AddWindow(Shared.Windows.Config);
 
-        WindowSystem.AddWindow(ConfigWindow);
-        WindowSystem.AddWindow(MainWindow);
-
-        CommandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
+        Service<ICommandManager>.Get().AddHandler(CommandName, new CommandInfo(OnCommand)
         {
             HelpMessage = "Shows the RP Buddy introduction"
         });
 
-        PluginInterface.UiBuilder.Draw += WindowSystem.Draw;
-
+        PluginInterface.UiBuilder.Draw += _windowSystem.Draw;
         PluginInterface.UiBuilder.OpenConfigUi += ToggleConfigUi;
-
         PluginInterface.UiBuilder.OpenMainUi += ToggleMainUi;
 
-        ChatGui.ChatMessage += ChatGui_ChatMessage;
+        Service<IChatGui>.Get().ChatMessage += ChatGui_ChatMessage;
+        Service<IPluginLog>.Get().Information("Plugin created");
 
-        Log.Information($"Plugin created");
-        
-        Inventory = new LocalInventory();
-        
-        RpInventory = new RpInventoryAddon(Inventory)
+        Shared.Addons.RpInventory = new RpInventoryAddon
         {
             InternalName = "RpInventory",
             Title = "RP Inventory"
         };
-        ContextMenu = new ContextMenuWindow
+        Shared.Addons.ContextMenu = new ContextMenuAddon
         {
-            InternalName = "RpBuddyContextMenu",
+            InternalName = "ContextMenu",
             Title = ""
         };
+        
 
-        Framework.RunSafely(() =>
+        Service<IFramework>.Get().RunSafely(() =>
         {
-            ItemTooltipOverlay = new ItemTooltipOverlay();
+            Shared.OverlayController = new OverlayController();
+
+            Shared.Addons.ItemTooltip = new ItemTooltipOverlay();
             
-            OverlayController = new OverlayController();
-            OverlayController.AddNode(ItemTooltipOverlay);
+            Shared.OverlayController.AddNode(Shared.Addons.ItemTooltip);
         });
         
         SeedInventory();
@@ -109,7 +85,7 @@ public sealed class Plugin : IDalamudPlugin
         if (message.IsHandled)
             return;
 
-        if (!Configuration.IsChatTypeEnabled(message.LogKind))
+        if (!Shared.Configuration.IsChatTypeEnabled(message.LogKind))
             return;
 
         var macroSender = NativeStringConverter.SeStringToMacroCode(message.Sender);
@@ -128,8 +104,8 @@ public sealed class Plugin : IDalamudPlugin
         }
         else
         {
-            var lp = ObjectTable.LocalPlayer;
-            if ((lp != null && lp.Name.TextValue == message.OriginalSender.ExtractText()) || (Configuration.AlwaysAssumeLocalPlayer && lp != null))
+            var lp = Service<IObjectTable>.Get().LocalPlayer;
+            if ((lp != null && lp.Name.TextValue == message.OriginalSender.ExtractText()) || (Shared.Configuration.AlwaysAssumeLocalPlayer && lp != null))
             {
                 var playerCharacter = PlayerManager.GetPlayerCharacterFromPayload(new PlayerPayload(lp.Name.TextValue, lp.HomeWorld.RowId));
                 if (playerCharacter != null)
@@ -140,12 +116,12 @@ public sealed class Plugin : IDalamudPlugin
         }
 
         // Configuration checks
-        if (Configuration.RequiresRoleplayingTag && !isRoleplaying)
+        if (Shared.Configuration.RequiresRoleplayingTag && !isRoleplaying)
         {
             return;
         }
 
-        if (Configuration.ShowRoleplayTagInChat && isRoleplaying)
+        if (Shared.Configuration.ShowRoleplayTagInChat && isRoleplaying)
         {
             hasChanges = true;
             macroSender = $"<icon({(uint)BitmapFontIcon.RolePlaying})> " + macroSender;
@@ -168,11 +144,11 @@ public sealed class Plugin : IDalamudPlugin
         }
 
         var treatAsEmoteChat = isSayChat || startsWithPipe;
-        var treatAsEmoteChatCheck = Configuration.TreatSayAsEmoteForEveryone
-            ? Configuration.TreatSayAsEmote && treatAsEmoteChat
-            : Configuration.TreatSayAsEmote && treatAsEmoteChat && isRoleplaying;
+        var treatAsEmoteChatCheck = Shared.Configuration.TreatSayAsEmoteForEveryone
+            ? Shared.Configuration.TreatSayAsEmote && treatAsEmoteChat
+            : Shared.Configuration.TreatSayAsEmote && treatAsEmoteChat && isRoleplaying;
 
-        var parser = new ChatParser(Log);
+        var parser = new ChatParser();
         var tokens = parser.Tokenize(macroMessage);
 
         var textOnly = new StringBuilder();
@@ -226,23 +202,23 @@ public sealed class Plugin : IDalamudPlugin
 
     public void Dispose()
     {
-        PluginInterface.UiBuilder.Draw -= WindowSystem.Draw;
+        PluginInterface.UiBuilder.Draw -= _windowSystem.Draw;
         PluginInterface.UiBuilder.OpenConfigUi -= ToggleConfigUi;
         PluginInterface.UiBuilder.OpenMainUi -= ToggleMainUi;
-
-        ChatGui.ChatMessage -= ChatGui_ChatMessage;
         
-        WindowSystem.RemoveAllWindows();
-
-        ConfigWindow.Dispose();
-        MainWindow.Dispose();
-
-        CommandManager.RemoveHandler(CommandName);
+        Service<IChatGui>.Get().ChatMessage -= ChatGui_ChatMessage;
         
-        RpInventory.Dispose();
-        ContextMenu.Dispose();
-        ItemTooltipOverlay?.Dispose();
-        OverlayController?.Dispose();
+        _windowSystem.RemoveAllWindows();
+
+        Shared.Windows.Main.Dispose();
+        Shared.Windows.Config.Dispose();
+
+        Service<ICommandManager>.Get().RemoveHandler(CommandName);
+        
+        Shared.Addons.RpInventory.Dispose();
+        Shared.Addons.ContextMenu.Dispose();
+        Shared.Addons.ItemTooltip.Dispose();
+        Shared.OverlayController.Dispose();
         KamiToolKitLibrary.Dispose();
     }
 
@@ -251,20 +227,20 @@ public sealed class Plugin : IDalamudPlugin
         switch (args.Split(' ').First().ToLower())
         {
             case "inventory":
-                RpInventory.Toggle();
+                Shared.Addons.RpInventory.Toggle();
                 break;
             case "e":
-                ContextMenu.Toggle();
+                Shared.Addons.ContextMenu.Toggle();
                 break;
             default:
-                MainWindow.Toggle();
+                Shared.Windows.Main.Toggle();
                 break;
         }
     }
 
     private void SeedInventory()
     {
-        Configuration.ItemCatalog.Register(new CustomItem
+        Shared.ItemCatalog.Register(new CustomItem
         {
             Id = Guid.Empty,
             Name = "Tropical Sunset",
@@ -273,16 +249,16 @@ public sealed class Plugin : IDalamudPlugin
             MaxStackSize = 1
         });
         
-        foreach (var invItem in Configuration.ItemCatalog.GetAll().Select(customItem => new InventoryItem
+        foreach (var invItem in Shared.ItemCatalog.GetAll().Select(customItem => new InventoryItem
                  {
                      Item = customItem,
                      Quantity = 1
                  }))
         {
-            Inventory.AddItem(invItem);
+            Shared.Inventory.AddItem(invItem);
         }
     }
     
-    public void ToggleConfigUi() => ConfigWindow.Toggle();
-    public void ToggleMainUi() => MainWindow.Toggle();
+    public void ToggleConfigUi() => Shared.Windows.Config.Toggle();
+    public void ToggleMainUi() => Shared.Windows.Main.Toggle();
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
+using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using KamiToolKit.BaseTypes;
 using KamiToolKit.Classes;
@@ -21,11 +22,6 @@ public class RpInventoryAddon : NativeAddon
     private readonly List<DragDropNode> slots = [];
     private readonly Dictionary<DragDropNode, InventoryItem?> slotContents = [];
     private readonly InventoryBase inventory;
-
-    public RpInventoryAddon(InventoryBase inventory)
-    {
-        this.inventory = inventory;
-    }
 
     private void UpdateItemsFromInventory()
     {
@@ -70,7 +66,7 @@ public class RpInventoryAddon : NativeAddon
 
                 slot.OnBegin += _ =>
                 {
-                    Plugin.Instance.ItemTooltipOverlay.Close();
+                    Shared.Addons.ItemTooltip.Close();
                 };
 
                 slot.OnPayloadAccepted += (targetSlot, payload) =>
@@ -89,14 +85,14 @@ public class RpInventoryAddon : NativeAddon
 
                     slot.ShowTooltip();
                     var t = slot.ScreenPosition;
-                    Plugin.Instance.ItemTooltipOverlay.Position = new Vector2(t.X + SlotSize + 4f, t.Y + SlotSize + 4f);
-                    Plugin.Instance.ItemTooltipOverlay.SetContents(inventoryItem);
-                    Plugin.Instance.ItemTooltipOverlay.Open();
+                    Shared.Addons.ItemTooltip.Position = new Vector2(t.X + SlotSize + 4f, t.Y + SlotSize + 4f);
+                    Shared.Addons.ItemTooltip.SetContents(inventoryItem);
+                    Shared.Addons.ItemTooltip.Open();
                 };
 
                 slot.OnRollOut += _ =>
                 {
-                    Plugin.Instance.ItemTooltipOverlay.Close();
+                    Shared.Addons.ItemTooltip.Close();
                     slot.HideTooltip();
                 };
 
@@ -110,7 +106,7 @@ public class RpInventoryAddon : NativeAddon
                     if (atkEventData->MouseData.ButtonId != 1) return;
                     if (slotContents[slot] is not { } inventoryItem) return;
                     
-                    Plugin.Instance.ItemTooltipOverlay.Close();
+                    Shared.Addons.ItemTooltip.Close();
                 });
                 
                 slots.Add(slot);
@@ -134,18 +130,18 @@ public class RpInventoryAddon : NativeAddon
     {
         if (index < 0 || index >= slots.Count)
         {
-            Plugin.Log.Warning("Tried setting slot {index}, which is out of range.\n{index1} < 0 || {index2} >= {totalSlots}", index, index, index, slots.Count);
+            Service<IPluginLog>.Get().Warning("Tried setting slot {index}, which is out of range.\n{index1} < 0 || {index2} >= {totalSlots}", index, index, index, slots.Count);
             return;
         }
 
         var slot = slots[index];
         slotContents[slot] = inventoryItem;
 
-        Plugin.Log.Info("Setting contents for {slot} ({index}) with {item}", slot, index, inventoryItem?.Item.Name ?? "None");
+        Service<IPluginLog>.Get().Info("Setting contents for {slot} ({index}) with {item}", slot, index, inventoryItem?.Item.Name ?? "None");
 
         if (inventoryItem is null)
         {
-            Plugin.Log.Warning("Slot {slot} ({index}) will be set to empty.", slot, index);
+            Service<IPluginLog>.Get().Warning("Slot {slot} ({index}) will be set to empty.", slot, index);
             slot.Clear();
             slot.QuantityString = string.Empty;
             slot.TextTooltip = default;

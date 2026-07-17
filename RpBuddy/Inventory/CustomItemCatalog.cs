@@ -13,7 +13,7 @@ public sealed class CustomItemCatalog
     {
         Items[item.Id] = item;
         
-        Plugin.Instance.Configuration.Save();
+        Shared.Configuration.Save();
         
         return item;
     }

@@ -75,7 +75,7 @@ public class ConfigWindow : Window, IDisposable
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
         };
 
-        configuration = plugin.Configuration;
+        configuration = Shared.Configuration;
     }
 
     public void Dispose() { }
