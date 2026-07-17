@@ -1,12 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Game.Text;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Windowing;
-using FFXIVClientStructs.FFXIV.Client.Game;
 using Lumina.Text;
 
 namespace RpBuddy.Windows;

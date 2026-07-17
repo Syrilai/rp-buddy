@@ -1,6 +1,5 @@
 using System;
 using Dalamud.Game.Chat;
-using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.Command;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
@@ -9,23 +8,17 @@ using Dalamud.Interface.Windowing;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
-using FFXIVClientStructs;
 using RpBuddy.Utils;
 using RpBuddy.Windows;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
 using System.Text;
 using KamiToolKit;
-using KamiToolKit.Controllers;
-using KamiToolKit.Nodes;
 using KamiToolKit.UiOverlay;
-using Lumina.Text.Payloads;
 using RpBuddy.Addons;
 using RpBuddy.Addons.Overlays;
 using RpBuddy.Extensions;
 using RpBuddy.Inventory;
-using SeStringBuilder = Lumina.Text.SeStringBuilder;
 
 namespace RpBuddy;
 
@@ -46,8 +39,6 @@ public sealed class Plugin : IDalamudPlugin
     public readonly WindowSystem WindowSystem = new("RP Buddy");
     private ConfigWindow ConfigWindow { get; init; }
     private MainWindow MainWindow { get; init; }
-
-    public readonly ChatColors ChatColors;
 
     public static Plugin Instance = null!;
     
@@ -71,8 +62,6 @@ public sealed class Plugin : IDalamudPlugin
 
         ConfigWindow = new ConfigWindow(this);
         MainWindow = new MainWindow(this);
-
-        ChatColors = new();
 
         WindowSystem.AddWindow(ConfigWindow);
         WindowSystem.AddWindow(MainWindow);

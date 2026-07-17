@@ -1,4 +1,3 @@
-using Dalamud.Bindings.ImGui;
 using Dalamud.Plugin.Services;
 using System;
 using System.Collections.Generic;
