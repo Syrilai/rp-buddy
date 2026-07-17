@@ -360,30 +360,15 @@ namespace RpBuddy.Utils
 
         public static string GetColorForMatchType(MatchType matchType)
         {
-            var plugin = Plugin.Instance;
-
-            if (plugin.IsChatTwoEnabled)
+            return matchType switch
             {
-                return matchType switch
-                {
-                    MatchType.Quote => ChatColors.ColorSay.ToString(),
-                    MatchType.Action => ChatColors.ColorEmoteUser.ToString(),
-                    MatchType.OOC => ChatColors.ColorTell.ToString(),
-                    MatchType.Continued
-                        or MatchType.Done => ChatColors.ColorEcho.ToString()
-                };
-            }
-            else
-            {
-                return matchType switch
-                {
-                    MatchType.Quote => $"gnum{(int)GlobalExpressions.ColorSay}",
-                    MatchType.Action => $"gnum{(int)GlobalExpressions.ColorEmoteUser}",
-                    MatchType.OOC => $"gnum{(int)GlobalExpressions.ColorTell}",
-                    MatchType.Continued
-                        or MatchType.Done => $"gnum{(int)GlobalExpressions.ColorEcho}"
-                };
-            }
+                MatchType.Quote => $"gnum{(int)GlobalExpressions.ColorSay}",
+                MatchType.Action => $"gnum{(int)GlobalExpressions.ColorEmoteUser}",
+                MatchType.OOC => $"gnum{(int)GlobalExpressions.ColorTell}",
+                MatchType.Continued
+                    or MatchType.Done => $"gnum{(int)GlobalExpressions.ColorEcho}",
+                _ => throw new ArgumentOutOfRangeException(nameof(matchType), matchType, null)
+            };
         }
 
         private void AddFormattedMatch(

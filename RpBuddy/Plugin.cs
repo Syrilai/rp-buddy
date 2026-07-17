@@ -1,3 +1,4 @@
+using System;
 using Dalamud.Game.Chat;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.Command;
@@ -13,7 +14,18 @@ using RpBuddy.Utils;
 using RpBuddy.Windows;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
+using KamiToolKit;
+using KamiToolKit.Controllers;
+using KamiToolKit.Nodes;
+using KamiToolKit.UiOverlay;
+using Lumina.Text.Payloads;
+using RpBuddy.Addons;
+using RpBuddy.Addons.Overlays;
+using RpBuddy.Extensions;
+using RpBuddy.Inventory;
+using SeStringBuilder = Lumina.Text.SeStringBuilder;
 
 namespace RpBuddy;
 
@@ -26,24 +38,34 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static IChatGui ChatGui { get; private set; } = null!;
     [PluginService] internal static IObjectTable ObjectTable { get; private set; } = null!;
     [PluginService] internal static IGameConfig GameConfig { get; private set; } = null!;
-
-    public bool IsChatTwoEnabled = false;
+    [PluginService] internal static IFramework Framework { get; private set; } = null!;
 
     private const string CommandName = "/rpbuddy";
-
     public Configuration Configuration { get; init; }
 
     public readonly WindowSystem WindowSystem = new("RP Buddy");
     private ConfigWindow ConfigWindow { get; init; }
     private MainWindow MainWindow { get; init; }
 
-    public ChatColors ChatColors;
+    public readonly ChatColors ChatColors;
 
     public static Plugin Instance = null!;
+    
+    public readonly RpInventoryAddon RpInventory;
+    public readonly ContextMenuWindow ContextMenu;
+    private OverlayController OverlayController { get; set; }
+    public ItemTooltipOverlay ItemTooltipOverlay { get; private set; }
+
+    public InventoryBase Inventory;
 
     public Plugin()
     {
         Instance = this;
+        KamiToolKitLibrary.Initialize(PluginInterface);
+        
+        #if DEBUG
+        Log.Info("We are running in debug mode!");
+        #endif
 
         Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
 
@@ -54,8 +76,6 @@ public sealed class Plugin : IDalamudPlugin
 
         WindowSystem.AddWindow(ConfigWindow);
         WindowSystem.AddWindow(MainWindow);
-
-        PluginInterface.ActivePluginsChanged += ActivePluginsChanged;
 
         CommandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
         {
@@ -71,40 +91,29 @@ public sealed class Plugin : IDalamudPlugin
         ChatGui.ChatMessage += ChatGui_ChatMessage;
 
         Log.Information($"Plugin created");
-
-        CheckCompatibility();
-    }
-
-    internal void ActivePluginsChanged(IActivePluginsChangedEventArgs args)
-    {
-        if (args.AffectedInternalNames.Any(i => i.Equals("ChatTwo"))) {
-            var newValue = args.Kind switch
-            {
-                PluginListInvalidationKind.Unloaded => false,
-                PluginListInvalidationKind.Loaded 
-                    or PluginListInvalidationKind.Update
-                    or PluginListInvalidationKind.AutoUpdate => true,
-                _ => false
-            };
-
-            IsChatTwoEnabled = newValue;
-        }
-    }
-
-    internal void CheckCompatibility()
-    {
-        foreach (var installedPlugin in PluginInterface.InstalledPlugins)
+        
+        Inventory = new LocalInventory();
+        
+        RpInventory = new RpInventoryAddon(Inventory)
         {
-            if (!installedPlugin.InternalName.Equals("ChatTwo"))
-                continue;
+            InternalName = "RpInventory",
+            Title = "RP Inventory"
+        };
+        ContextMenu = new ContextMenuWindow
+        {
+            InternalName = "RpBuddyContextMenu",
+            Title = ""
+        };
 
-            IsChatTwoEnabled = installedPlugin.IsLoaded;
-        }
-    }
-
-    internal static Lumina.Text.SeStringBuilder NewSeStringBuilder()
-    {
-        return new Lumina.Text.SeStringBuilder();
+        Framework.RunSafely(() =>
+        {
+            ItemTooltipOverlay = new ItemTooltipOverlay();
+            
+            OverlayController = new OverlayController();
+            OverlayController.AddNode(ItemTooltipOverlay);
+        });
+        
+        SeedInventory();
     }
 
     private void ChatGui_ChatMessage(IHandleableChatMessage message) {
@@ -231,7 +240,6 @@ public sealed class Plugin : IDalamudPlugin
         PluginInterface.UiBuilder.Draw -= WindowSystem.Draw;
         PluginInterface.UiBuilder.OpenConfigUi -= ToggleConfigUi;
         PluginInterface.UiBuilder.OpenMainUi -= ToggleMainUi;
-        PluginInterface.ActivePluginsChanged -= ActivePluginsChanged;
 
         ChatGui.ChatMessage -= ChatGui_ChatMessage;
         
@@ -241,11 +249,49 @@ public sealed class Plugin : IDalamudPlugin
         MainWindow.Dispose();
 
         CommandManager.RemoveHandler(CommandName);
+        
+        RpInventory.Dispose();
+        ContextMenu.Dispose();
+        ItemTooltipOverlay?.Dispose();
+        OverlayController?.Dispose();
+        KamiToolKitLibrary.Dispose();
     }
 
     private void OnCommand(string command, string args)
     {
-        MainWindow.Toggle();
+        switch (args.Split(' ').First().ToLower())
+        {
+            case "inventory":
+                RpInventory.Toggle();
+                break;
+            case "e":
+                ContextMenu.Toggle();
+                break;
+            default:
+                MainWindow.Toggle();
+                break;
+        }
+    }
+
+    private void SeedInventory()
+    {
+        Configuration.ItemCatalog.Register(new CustomItem
+        {
+            Id = Guid.Empty,
+            Name = "Tropical Sunset",
+            IconId = 24415,
+            Description = "Freshly mixed watermelon juice, some lime and apple juice, topped off with a slice of lime.",
+            MaxStackSize = 1
+        });
+        
+        foreach (var invItem in Configuration.ItemCatalog.GetAll().Select(customItem => new InventoryItem
+                 {
+                     Item = customItem,
+                     Quantity = 1
+                 }))
+        {
+            Inventory.AddItem(invItem);
+        }
     }
     
     public void ToggleConfigUi() => ConfigWindow.Toggle();

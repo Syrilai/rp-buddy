@@ -2,6 +2,7 @@ using Dalamud.Configuration;
 using Dalamud.Game.Text;
 using System;
 using System.Collections.Generic;
+using RpBuddy.Inventory;
 
 namespace RpBuddy;
 
@@ -19,6 +20,8 @@ public class Configuration : IPluginConfiguration
     // Chat Types
     public HashSet<int> EnabledChatTypes { get; set; } = GetDefaultChatTypes();
 
+    public CustomItemCatalog ItemCatalog = new();
+    
     public static HashSet<int> GetDefaultChatTypes()
     {
         return new HashSet<int>
