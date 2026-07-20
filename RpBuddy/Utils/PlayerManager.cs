@@ -2,6 +2,7 @@ using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using System;
 using Dalamud.Plugin.Services;
+using Syrilib.Extensions.Dalamud;
 
 namespace RpBuddy.Utils
 {
@@ -32,7 +33,7 @@ namespace RpBuddy.Utils
     {
         public static IPlayerCharacter? GetPlayerCharacterFromPayload(PlayerPayload payload)
         {
-            var objectTable = Service<IObjectTable>.Get();
+            var objectTable = IObjectTable.Get();
 
             // Check if the payload is not actually us (sus)
             if (objectTable.LocalPlayer != null &&

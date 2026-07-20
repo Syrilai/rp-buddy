@@ -1,6 +1,7 @@
 ﻿using KamiToolKit.UiOverlay;
 using RpBuddy.Addons;
 using RpBuddy.Addons.Overlays;
+using RpBuddy.Features.Chat;
 using RpBuddy.Inventory;
 using RpBuddy.Windows;
 
@@ -13,8 +14,14 @@ public static class Shared
     public static OverlayController OverlayController { get; set; } = null!;
     public static InventoryBase Inventory { get; set; } = null!;
 
-    public static SharedWindows Windows { get; set; } = new();
-    public static SharedAddons Addons { get; set; } = new();
+    public static SharedFeatures Features { get; private set; } = new();
+    public static SharedWindows Windows { get; private set; } = new();
+    public static SharedAddons Addons { get; private set; } = new();
+}
+
+public class SharedFeatures
+{
+    public ChatFeature Chat { get; set; } = null!;
 }
 
 public class SharedWindows

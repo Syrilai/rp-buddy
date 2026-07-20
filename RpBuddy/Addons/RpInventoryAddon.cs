@@ -8,6 +8,7 @@ using KamiToolKit.Classes;
 using KamiToolKit.Nodes;
 using Lumina.Text.ReadOnly;
 using RpBuddy.Inventory;
+using Syrilib.Extensions.Dalamud;
 
 namespace RpBuddy.Addons;
 
@@ -22,6 +23,11 @@ public class RpInventoryAddon : NativeAddon
     private readonly List<DragDropNode> slots = [];
     private readonly Dictionary<DragDropNode, InventoryItem?> slotContents = [];
     private readonly InventoryBase inventory;
+
+    public RpInventoryAddon()
+    {
+        inventory = Shared.Inventory;
+    }
 
     private void UpdateItemsFromInventory()
     {
@@ -100,14 +106,29 @@ public class RpInventoryAddon : NativeAddon
                 {
                     inventory.DiscardItem(index);
                 };
-                
-                slot.AddEvent(AtkEventType.DragDropClick, (thisPtr, eventType, eventParam, atkEvent, atkEventData) =>
+
+                slot.OnClicked += node =>
                 {
-                    if (atkEventData->MouseData.ButtonId != 1) return;
-                    if (slotContents[slot] is not { } inventoryItem) return;
+                    // Shared.Addons.ItemTooltip.Close();
+                    //
+                    // var actions = new List<(string Text, Action Action)>
+                    // {
+                    //     (
+                    //         Text: "Use",
+                    //         Action: () => { }
+                    //     )
+                    // };
+                    //
+                    // Shared.Addons.ContextMenu.ShowMenu(actions, slot.ScreenPosition);
                     
+                    if (slotContents[slot] is not { } inventoryItem) return;
+
+                    if (!inventoryItem.Item.CanBeUsed) return;
+                    
+                    // TODO We want to show the context menu, but for now we will just use the item directly
                     Shared.Addons.ItemTooltip.Close();
-                });
+                    inventory.UseItem(index);
+                };
                 
                 slots.Add(slot);
                 slotContents[slot] = null;
@@ -130,18 +151,18 @@ public class RpInventoryAddon : NativeAddon
     {
         if (index < 0 || index >= slots.Count)
         {
-            Service<IPluginLog>.Get().Warning("Tried setting slot {index}, which is out of range.\n{index1} < 0 || {index2} >= {totalSlots}", index, index, index, slots.Count);
+            IPluginLog.Get().Warning("Tried setting slot {index}, which is out of range.\n{index1} < 0 || {index2} >= {totalSlots}", index, index, index, slots.Count);
             return;
         }
 
         var slot = slots[index];
         slotContents[slot] = inventoryItem;
 
-        Service<IPluginLog>.Get().Info("Setting contents for {slot} ({index}) with {item}", slot, index, inventoryItem?.Item.Name ?? "None");
+        IPluginLog.Get().Info("Setting contents for {slot} ({index}) with {item}", slot, index, inventoryItem?.Item.Name ?? "None");
 
         if (inventoryItem is null)
         {
-            Service<IPluginLog>.Get().Warning("Slot {slot} ({index}) will be set to empty.", slot, index);
+            IPluginLog.Get().Warning("Slot {slot} ({index}) will be set to empty.", slot, index);
             slot.Clear();
             slot.QuantityString = string.Empty;
             slot.TextTooltip = default;

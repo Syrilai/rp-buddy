@@ -1,10 +1,18 @@
-﻿using System.Numerics;
+﻿using System;
+using System.Numerics;
+using Dalamud.Game.Text.SeStringHandling;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using KamiToolKit.Enums;
 using KamiToolKit.Nodes;
 using KamiToolKit.Nodes.Simplified;
 using KamiToolKit.UiOverlay;
+using Lumina.Text.Payloads;
+using Lumina.Text.ReadOnly;
 using RpBuddy.Inventory;
+using RpBuddy.Inventory.Actions;
+using RpBuddy.Utils;
+using SeStringBuilder = Lumina.Text.SeStringBuilder;
+
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable InconsistentNaming
 
@@ -31,7 +39,12 @@ public sealed class ItemTooltipOverlay : OverlayNode
     public readonly ResNode DescriptionGroup;
     public readonly SimpleNineGridNode DescriptionGroupDivider;
     public readonly TextNode DescriptionText;
-
+    
+    // Action Group
+    public readonly ResNode ActionGroup;
+    public readonly SimpleNineGridNode ActionGroupDivider;
+    public readonly TextNode ActionText;
+    
     private const float Width = 376.0f;
 
     private const float HeaderHeight = 78.0f;
@@ -149,7 +162,7 @@ public sealed class ItemTooltipOverlay : OverlayNode
 
         DescriptionGroup = new ResNode
         {
-            Position = new Vector2(0, 79),
+            Position = new Vector2(0, HeaderHeight + 1.0f),
             Size = new Vector2(374, 165)
         };
         DescriptionGroup.AttachNode(Container);
@@ -181,6 +194,41 @@ public sealed class ItemTooltipOverlay : OverlayNode
             TextFlags = TextFlags.Emboss | TextFlags.WordWrap | TextFlags.MultiLine
         };
         DescriptionText.AttachNode(DescriptionGroup);
+        
+        ActionGroup = new ResNode
+        {
+            Position = new Vector2(0, 79),
+            Size = new Vector2(374, 0)
+        };
+        ActionGroup.AttachNode(Container);
+
+        ActionGroupDivider = new SimpleNineGridNode
+        {
+            NodeId = 41,
+            Position = new Vector2(15, 4),
+            Size = new Vector2(346, 4),
+            TexturePath = "ui/uld/WindowA_Line.tex",
+            TextureCoordinates = Vector2.Zero,
+            TextureSize = new Vector2(32.0f, 4.0f),
+            LeftOffset = 12.0f,
+            RightOffset = 12.0f,
+            NodeFlags = NodeFlags.AnchorTop | NodeFlags.AnchorLeft | NodeFlags.AnchorRight |
+                        NodeFlags.Visible | NodeFlags.Enabled | NodeFlags.EmitsEvents
+        };
+        ActionGroupDivider.AttachNode(ActionGroup);
+
+        ActionText = new TextNode
+        {
+            IsVisible = true,
+            Position = new Vector2(17, 8),
+            Size = new Vector2(342, 40),
+
+            TextColor = new Vector4(1, 1, 1, 1),
+            AlignmentType = AlignmentType.TopLeft,
+            FontSize = 12,
+            TextFlags = TextFlags.Emboss | TextFlags.WordWrap | TextFlags.MultiLine
+        };
+        ActionText.AttachNode(ActionGroup);
     }
 
     protected override void OnSizeChanged()
@@ -212,11 +260,76 @@ public sealed class ItemTooltipOverlay : OverlayNode
         ItemNameText.String = inventoryItem.Item.Name;
         ItemIcon.IconId = inventoryItem.Item.IconId;
         QuantityText.String = $"{inventoryItem.Quantity}/{inventoryItem.Item.MaxStackSize}";
-        CategoryText.String = "Other";
+        CategoryText.String = inventoryItem.Item.Category.Value.Name;
+
+        var actionString = new SeStringBuilder();
+
+        var hasActions = inventoryItem.Item is { CanBeUsed: true, UseActions.Count: > 0 };
+
+        var i = 0;
+        if (hasActions)
+        {
+            actionString
+                .BeginMacro(MacroCode.Color)
+                .AppendIntExpression(0xFF5959)
+                .EndMacro()
+                .Append("This item has custom actions!")
+                .PopColor()
+                .AppendNewLine();
+            
+            foreach (var action in inventoryItem.Item.UseActions)
+            {
+                AddActionText(actionString, action, 0, "");
+                i++;
+            }
+        }
+        
         DescriptionText.String = inventoryItem.Item.Description;
+        ActionText.String = actionString.ToReadOnlySeString();
 
         var descriptionTextSize = DescriptionText.GetTextDrawSize();
+        var actionTextSize = ActionText.GetTextDrawSize();
 
-        Size = new Vector2(Width, HeaderHeight + DescriptionText.Position.Y + descriptionTextSize.Y + 12.0f);
+        var containerHeight = HeaderHeight + 1.0f;
+        containerHeight += DescriptionText.Position.Y + descriptionTextSize.Y;
+        if (hasActions)
+            containerHeight += ActionText.Position.Y + actionTextSize.Y;
+        containerHeight += 12.0f;
+
+        ActionGroup.Position = new Vector2(0, HeaderHeight + 1.0f + ActionText.Position.Y + descriptionTextSize.Y);
+        ActionGroup.IsVisible = hasActions;
+        Size = new Vector2(Width, containerHeight);
+    }
+
+    private static SeStringBuilder AddActionText(SeStringBuilder text, ItemActionBase action, int spacing = 0, string prefix = "", bool appendNewLine = true)
+    {
+        if (appendNewLine)
+            text.AppendNewLine();
+                
+        text
+            .Append(new string(' ', spacing * 4))
+            .Append(prefix);
+        
+        switch (action)
+        {
+            case ItemDelayedAction delayedAction:
+                text.Append($" Delayed Actions: ({Math.Floor(delayedAction.Delay / 1000f)}s)");
+                foreach (var actionToExecute in delayedAction.ActionsToExecute)
+                    AddActionText(text, actionToExecute, spacing + 1, " ");
+                break;
+            case ItemCommandAction commandAction:
+                text
+                    .AppendIcon((uint)BitmapFontIcon.Warning)
+                    .Append(" ")
+                    .AppendItalicized($"/{commandAction.Command}");
+                break;
+            default:
+                text
+                    .AppendIcon((uint)BitmapFontIcon.NoCircle)
+                    .Append(" Unknown Action");
+                break;
+        }
+
+        return text;
     }
 }

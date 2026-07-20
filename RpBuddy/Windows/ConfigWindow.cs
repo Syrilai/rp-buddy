@@ -106,10 +106,10 @@ public class ConfigWindow : Window, IDisposable
 
     private void DrawGeneralSettings()
     {
-        var requiresRoleplayingTag = configuration.RequiresRoleplayingTag;
+        var requiresRoleplayingTag = configuration.ChatFeature.RequiresRoleplayingTag;
         if (ImGui.Checkbox("Requires Roleplaying Tag", ref requiresRoleplayingTag))
         {
-            configuration.RequiresRoleplayingTag = requiresRoleplayingTag;
+            configuration.ChatFeature.RequiresRoleplayingTag = requiresRoleplayingTag;
             configuration.Save();
         }
         if (ImGui.IsItemHovered())
@@ -117,10 +117,10 @@ public class ConfigWindow : Window, IDisposable
             ImGui.SetTooltip("Only process messages from players with the Roleplaying status");
         }
 
-        var treatSayAsEmote = configuration.TreatSayAsEmote;
+        var treatSayAsEmote = configuration.ChatFeature.TreatSayAsEmote;
         if (ImGui.Checkbox("Treat Say as Emote", ref treatSayAsEmote))
         {
-            configuration.TreatSayAsEmote = treatSayAsEmote;
+            configuration.ChatFeature.TreatSayAsEmote = treatSayAsEmote;
             configuration.Save();
         }
         if (ImGui.IsItemHovered())
@@ -128,7 +128,7 @@ public class ConfigWindow : Window, IDisposable
             ImGui.SetTooltip("Apply emoter color to Say chat messages");
         }
 
-        var treatSayAsEmoteForEveryone = configuration.TreatSayAsEmoteForEveryone;
+        var treatSayAsEmoteForEveryone = configuration.ChatFeature.TreatSayAsEmoteForEveryone;
         if (requiresRoleplayingTag | !treatSayAsEmote)
         {
             ImGui.BeginDisabled();
@@ -136,7 +136,7 @@ public class ConfigWindow : Window, IDisposable
         }
         if (ImGui.Checkbox("Treat Say as Emote for everyone", ref treatSayAsEmoteForEveryone))
         {
-            configuration.TreatSayAsEmoteForEveryone = treatSayAsEmoteForEveryone;
+            configuration.ChatFeature.TreatSayAsEmoteForEveryone = treatSayAsEmoteForEveryone;
             configuration.Save();
         }
         if (ImGui.IsItemHovered())
@@ -161,29 +161,15 @@ public class ConfigWindow : Window, IDisposable
 
         ImGui.Separator();
 
-        var showRoleplayTagInChat = configuration.ShowRoleplayTagInChat;
+        var showRoleplayTagInChat = configuration.ChatFeature.ShowRoleplayTagInChat;
         if (ImGui.Checkbox("Show Roleplay Tag in Chat", ref showRoleplayTagInChat))
         {
-            configuration.ShowRoleplayTagInChat = showRoleplayTagInChat;
+            configuration.ChatFeature.ShowRoleplayTagInChat = showRoleplayTagInChat;
             configuration.Save();
         }
         if (ImGui.IsItemHovered())
         {
             ImGui.SetTooltip("Show the RP icon next to player names in chat");
-        }
-
-        ImGui.Separator();
-        ImGui.TextColored(new Vector4(1, 0, 0, 1), "Risky Options Ahead");
-
-        var alwaysAssumeLocalPlayer = configuration.AlwaysAssumeLocalPlayer;
-        if (ImGui.Checkbox("If no PlayerPayload is found, always assume it's the LocalPlayer", ref alwaysAssumeLocalPlayer))
-        {
-            configuration.AlwaysAssumeLocalPlayer = alwaysAssumeLocalPlayer;
-            configuration.Save();
-        }
-        if (ImGui.IsItemHovered())
-        {
-            ImGui.SetTooltip("This can cause mischief in your chat, but can help if other plugins modify the sender payload");
         }
     }
 
@@ -202,10 +188,10 @@ public class ConfigWindow : Window, IDisposable
 
                     foreach (var (chatType, name, colorIndex) in chatTypes)
                     {
-                        var isEnabled = configuration.IsChatTypeEnabled(chatType);
+                        var isEnabled = configuration.ChatFeature.IsChatTypeEnabled(chatType);
                         if (ImGui.Checkbox($"##{chatType}", ref isEnabled))
                         {
-                            configuration.SetChatTypeEnabled(chatType, isEnabled);
+                            configuration.ChatFeature.SetChatTypeEnabled(chatType, isEnabled);
                             configuration.Save();
                         }
                         ImGui.SameLine();
@@ -235,7 +221,7 @@ public class ConfigWindow : Window, IDisposable
             {
                 foreach (var (chatType, _, _) in chatTypes)
                 {
-                    configuration.SetChatTypeEnabled(chatType, true);
+                    configuration.ChatFeature.SetChatTypeEnabled(chatType, true);
                 }
             }
             configuration.Save();
@@ -249,7 +235,7 @@ public class ConfigWindow : Window, IDisposable
             {
                 foreach (var (chatType, _, _) in chatTypes)
                 {
-                    configuration.SetChatTypeEnabled(chatType, false);
+                    configuration.ChatFeature.SetChatTypeEnabled(chatType, false);
                 }
             }
             configuration.Save();
@@ -259,7 +245,7 @@ public class ConfigWindow : Window, IDisposable
 
         if (ImGui.Button("Reset to Defaults"))
         {
-            configuration.EnabledChatTypes = Configuration.GetDefaultChatTypes();
+            configuration.ChatFeature.EnabledChatTypes = ChatFeatureConfiguration.GetDefaultChatTypes();
             configuration.Save();
         }
     }

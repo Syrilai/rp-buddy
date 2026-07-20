@@ -11,19 +11,29 @@ public class Configuration : IPluginConfiguration
 {
     public int Version { get; set; } = 1;
 
-    // General
+    public ChatFeatureConfiguration ChatFeature { get; set; } = new();
+
+    public void Save()
+    {
+        Plugin.PluginInterface.SavePluginConfig(this);
+    }
+}
+
+[Serializable]
+public class ChatFeatureConfiguration
+{
     public bool RequiresRoleplayingTag { get; set; } = true;
     public bool TreatSayAsEmote { get; set; } = true;
     public bool TreatSayAsEmoteForEveryone { get; set; } = false;
     public bool ShowRoleplayTagInChat { get; set; } = true;
-
-    // Chat Types
+    public bool ShowTargetedInChat { get; set; } = true;
+    public bool ShowOnlineStatusInChat { get; set; } = false;
     public HashSet<int> EnabledChatTypes { get; set; } = GetDefaultChatTypes();
     
     public static HashSet<int> GetDefaultChatTypes()
     {
-        return new HashSet<int>
-        {
+        return
+        [
             (int)XivChatType.Say,
             (int)XivChatType.Yell,
             (int)XivChatType.CustomEmote,
@@ -32,12 +42,9 @@ public class Configuration : IPluginConfiguration
             (int)XivChatType.TellIncoming,
             (int)XivChatType.TellOutgoing,
             (int)XivChatType.Echo
-        };
+        ];
     }
-
-    // Risky
-    public bool AlwaysAssumeLocalPlayer {  get; set; } = false;
-
+    
     public bool IsChatTypeEnabled(XivChatType chatType)
     {
         return EnabledChatTypes.Contains((int)chatType);
@@ -53,10 +60,5 @@ public class Configuration : IPluginConfiguration
         {
             EnabledChatTypes.Remove((int)chatType);
         }
-    }
-
-    public void Save()
-    {
-        Plugin.PluginInterface.SavePluginConfig(this);
     }
 }

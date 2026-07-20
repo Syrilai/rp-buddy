@@ -61,6 +61,14 @@ public class LocalInventory : InventoryBase
 
     public override (NetworkStatus, bool) UseItem(int slot)
     {
-        throw new System.NotImplementedException();
+        // TODO Add logic here, for now just discard
+        var (_, item) = GetItem(slot);
+        if (item is null)
+            return (NetworkStatus.Success, false);
+        
+        foreach (var action in item.Item.UseActions)
+            action.Execute();
+        
+        return DiscardItem(slot);
     }
 }

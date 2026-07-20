@@ -1,7 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using Dalamud.Plugin.Services;
 using FFXIVClientStructs.Havok.Animation.Rig;
+using Lumina.Excel;
+using Lumina.Excel.Sheets;
 using Lumina.Text.ReadOnly;
+using RpBuddy.Inventory.Actions;
+using Syrilib.Extensions.Dalamud;
+using Syrilib.Extensions.Lumina;
 
 namespace RpBuddy.Inventory;
 
@@ -14,7 +20,13 @@ public sealed record CustomItem
     public ReadOnlySeString Description { get; init; } = string.Empty;
     public int MaxStackSize { get; init; } = 1;
 
-    public string DO_NOT_USE__Category = "Other";
-    public bool DO_NOT_USE__CanBeUsed { get; init; } = false;
-    public List<string> DO_NOT_USE__UseActions { get; init; } = [];
+    private uint _categoryId = 0;
+    public bool CanBeUsed { get; init; } = false;
+    public List<ItemActionBase> UseActions { get; init; } = [];
+
+    public RowRef<ItemUICategory> Category
+    {
+        get => ItemUICategory.GetRowRef(_categoryId);
+        set => _categoryId = value.RowId;
+    }
 }

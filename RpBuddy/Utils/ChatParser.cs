@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
+using Syrilib.Extensions.Dalamud;
 
 namespace RpBuddy.Utils
 {
@@ -61,7 +62,7 @@ namespace RpBuddy.Utils
 
         public ChatParser()
         {
-            _log = Service<IPluginLog>.Get();
+            _log = IPluginLog.Get();
         }
 
         public List<MacroToken> Tokenize(string macroCode)

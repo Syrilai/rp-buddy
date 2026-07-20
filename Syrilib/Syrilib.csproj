@@ -1,0 +1,9 @@
+﻿<Project Sdk="Dalamud.NET.Sdk/15.0.0">
+    <PropertyGroup>
+        <Use_DalamudPackager>false</Use_DalamudPackager>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="AllaganLib.GameSheets" Version="2.2.2" />
+        <PackageReference Include="LuminaSupplemental.Excel" Version="4.3.3" />
+    </ItemGroup>
+</Project>
