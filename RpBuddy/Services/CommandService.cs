@@ -40,34 +40,24 @@ public class CommandService : IDisposable
             case "inventory":
                 Shared.Addons.RpInventory.Toggle();
                 break;
-            case "e":
-                Shared.Addons.ContextMenu.Toggle();
-                break;
             case "additem":
                 var rawItemId = args.Split(' ').Skip(1).First();
-                if (Guid.TryParse(rawItemId, out var guid))
+                if (!Guid.TryParse(rawItemId, out var guid))
+                    break;
+
+                if (!Shared.ItemCatalog.TryGet(guid, out var item))
+                    break;
+
+                if (!int.TryParse(args.Split(' ').Skip(2).First(), out var amount))
+                    break;
+
+                Shared.Inventory.AddItem(new InventoryItem
                 {
-                    var item = Shared.ItemCatalog.Get(guid);
-                    if (item is null)
-                    {
-                        IChatGui.Get().PrintError("That is not a valid item id");
-                        break;
-                    }
-
-                    if (!int.TryParse(args.Split(' ').Skip(2).First(), out var amount))
-                    {
-                        IChatGui.Get().PrintError("That is not a valid amount");
-                        break;
-                    }
-
-                    Shared.Inventory.AddItem(new InventoryItem
-                    {
-                        Item = item,
-                        Quantity = amount
-                    });
-                    IChatGui.Get().Print($"Added {amount}x {item.Name}");
-                }
-
+                    Item = item,
+                    Quantity = amount
+                });
+                
+                IChatGui.Get().Print($"Added {amount}x {item.Name}");
                 break;
             default:
                 Shared.Windows.Main.Toggle();

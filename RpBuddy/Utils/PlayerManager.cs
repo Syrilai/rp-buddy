@@ -2,6 +2,8 @@ using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using System;
 using Dalamud.Plugin.Services;
+using Lumina.Excel;
+using Lumina.Excel.Sheets;
 using Syrilib.Extensions.Dalamud;
 
 namespace RpBuddy.Utils
@@ -11,13 +13,13 @@ namespace RpBuddy.Utils
         public readonly string CharacterName;
         public readonly uint WorldId;
 
-        public readonly uint OnlineStatus;
+        public readonly RowRef<OnlineStatus> OnlineStatus;
 
         // Managed Fields
         public readonly string CharacterFirstName;
         public readonly string CharacterLastName;
 
-        public PlayerInfo(string characterName, uint worldId, uint onlineStatus)
+        public PlayerInfo(string characterName, uint worldId, RowRef<OnlineStatus> onlineStatus)
         {
             CharacterName = characterName;
             WorldId = worldId;
@@ -29,7 +31,7 @@ namespace RpBuddy.Utils
         }
     }
 
-    internal class PlayerManager
+    internal static class PlayerManager
     {
         public static IPlayerCharacter? GetPlayerCharacterFromPayload(PlayerPayload payload)
         {
@@ -62,7 +64,7 @@ namespace RpBuddy.Utils
             var playerCharacter = GetPlayerCharacterFromPayload(payload);
             if (playerCharacter == null) return null;
 
-            return new(playerCharacter.Name.TextValue, playerCharacter.HomeWorld.RowId, playerCharacter.OnlineStatus.RowId);
+            return new PlayerInfo(playerCharacter.Name.TextValue, playerCharacter.HomeWorld.RowId, playerCharacter.OnlineStatus);
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using FFXIVClientStructs.FFXIV.Client.Game.WKS;
 
 namespace RpBuddy.Inventory;
 
@@ -18,6 +19,10 @@ public sealed class CustomItemCatalog
         return item;
     }
     
+    public bool TryGet(Guid id, out CustomItem item)
+    {
+        return Items.TryGetValue(id, out item!);
+    }
     public CustomItem? Get(Guid id) => Items.GetValueOrDefault(id);
     public List<CustomItem> GetAll() => Items.Select(item => item.Value).ToList();
     public bool Remove(Guid id) => Items.Remove(id);

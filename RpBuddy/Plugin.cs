@@ -47,11 +47,11 @@ public sealed class Plugin : IDalamudPlugin
             InternalName = "RpBuddyRpInventory",
             Title = "RP Inventory"
         };
-        Shared.Addons.ContextMenu = new ContextMenuAddon
-        {
-            InternalName = "RpBuddyContextMenu",
-            Title = ""
-        };
+        // Shared.Addons.AddonContextMenu = new ContextMenuAddon
+        // {
+        //     InternalName = "RpBuddyContextMenu",
+        //     Title = ""
+        // };
 
         _windowSystem.AddWindow(Shared.Windows.Main);
         _windowSystem.AddWindow(Shared.Windows.Config);
@@ -67,8 +67,11 @@ public sealed class Plugin : IDalamudPlugin
             Shared.OverlayController = new OverlayController();
 
             Shared.Addons.ItemTooltip = new ItemTooltipOverlay();
-            
+            Shared.Addons.ContextMenu = new ContextMenuOverlay();
+            Shared.Addons.ContextMenu.IsVisible = false;
+
             Shared.OverlayController.AddNode(Shared.Addons.ItemTooltip);
+            Shared.OverlayController.AddNode(Shared.Addons.ContextMenu);
         });
         
         SeedInventory();
@@ -88,9 +91,13 @@ public sealed class Plugin : IDalamudPlugin
         
         Shared.Addons.RpInventory.Dispose();
         Shared.Addons.ContextMenu.Dispose();
-        Shared.Addons.ItemTooltip.Dispose();
+
+        // OverlayController owns ItemTooltip — it disposes all registered nodes
         Shared.OverlayController.Dispose();
-        KamiToolKitLibrary.Dispose();
+
+        // Ensure library cleanup runs on the game's main framework thread
+        // GetAwaiter().GetResult() is safe — if already on framework thread, it runs inline
+        IFramework.Get().RunOnFrameworkThread(KamiToolKitLibrary.Dispose).GetAwaiter().GetResult();
         SyrilibMain.Dispose();
     }
 

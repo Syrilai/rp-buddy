@@ -109,25 +109,9 @@ public class RpInventoryAddon : NativeAddon
 
                 slot.OnClicked += node =>
                 {
-                    // Shared.Addons.ItemTooltip.Close();
-                    //
-                    // var actions = new List<(string Text, Action Action)>
-                    // {
-                    //     (
-                    //         Text: "Use",
-                    //         Action: () => { }
-                    //     )
-                    // };
-                    //
-                    // Shared.Addons.ContextMenu.ShowMenu(actions, slot.ScreenPosition);
-                    
                     if (slotContents[slot] is not { } inventoryItem) return;
 
-                    if (!inventoryItem.Item.CanBeUsed) return;
-                    
-                    // TODO We want to show the context menu, but for now we will just use the item directly
                     Shared.Addons.ItemTooltip.Close();
-                    inventory.UseItem(index);
                 };
                 
                 slots.Add(slot);
