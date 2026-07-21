@@ -4,6 +4,7 @@ using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Game.Text;
 using Dalamud.Interface.Utility;
+using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Lumina.Text;
 
@@ -161,6 +162,18 @@ public class ConfigWindow : Window, IDisposable
 
         ImGui.Separator();
 
+        var showOnlineStatusInChat = configuration.ChatFeature.ShowOnlineStatusInChat;
+        if (ImGui.Checkbox("Show Online Status in Chat", ref showOnlineStatusInChat))
+        {
+            configuration.ChatFeature.ShowOnlineStatusInChat = showOnlineStatusInChat;
+            configuration.Save();
+        }
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip("Show the online status icon next to player names in chat. This option is mutually exclusive with the one above.");
+        }
+        if (showOnlineStatusInChat)
+            ImGui.BeginDisabled();
         var showRoleplayTagInChat = configuration.ChatFeature.ShowRoleplayTagInChat;
         if (ImGui.Checkbox("Show Roleplay Tag in Chat", ref showRoleplayTagInChat))
         {
@@ -169,7 +182,19 @@ public class ConfigWindow : Window, IDisposable
         }
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip("Show the RP icon next to player names in chat");
+            ImGui.SetTooltip("Show the RP icon next to player names in chat. This option is mutually exclusive with the one below.");
+        }
+        if (showOnlineStatusInChat)
+            ImGui.EndDisabled();
+        var showTargetIndicator = configuration.ChatFeature.ShowTargetIndicator;
+        if (ImGui.Checkbox("Show Target Indicator in Chat", ref showTargetIndicator))
+        {
+            configuration.ChatFeature.ShowTargetIndicator = showTargetIndicator;
+            configuration.Save();
+        }
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip("This shows if the person who chatted has you targeted, or if you have them targeted.");
         }
     }
 

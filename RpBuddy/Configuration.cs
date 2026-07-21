@@ -22,13 +22,13 @@ public class Configuration : IPluginConfiguration
 [Serializable]
 public class ChatFeatureConfiguration
 {
-    public bool RequiresRoleplayingTag { get; set; } = true;
-    public bool TreatSayAsEmote { get; set; } = true;
-    public bool TreatSayAsEmoteForEveryone { get; set; } = false;
-    public bool ShowRoleplayTagInChat { get; set; } = true;
-    public bool ShowTargetedInChat { get; set; } = true;
-    public bool ShowOnlineStatusInChat { get; set; } = false;
-    public HashSet<int> EnabledChatTypes { get; set; } = GetDefaultChatTypes();
+    public bool         RequiresRoleplayingTag     { get; set; } = true;
+    public bool         TreatSayAsEmote            { get; set; } = true;
+    public bool         TreatSayAsEmoteForEveryone { get; set; }
+    public bool         ShowRoleplayTagInChat      { get; set; } = true;
+    public bool         ShowOnlineStatusInChat     { get; set; } = false;
+    public bool         ShowTargetIndicator        { get; set; } = false;
+    public HashSet<int> EnabledChatTypes           { get; set; } = GetDefaultChatTypes();
     
     public static HashSet<int> GetDefaultChatTypes()
     {

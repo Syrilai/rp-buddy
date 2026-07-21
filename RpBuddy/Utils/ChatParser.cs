@@ -1,4 +1,7 @@
+using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Plugin.Services;
+using Dalamud.Utility;
+using Lumina.Text.Payloads;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -565,6 +568,129 @@ namespace RpBuddy.Utils
             return sb.ToString();
         }
 
-        
+        public static SeString RebuildFromTokens(List<MacroToken> tokens)
+        {
+            var sb = new Lumina.Text.SeStringBuilder();
+            foreach (var token in tokens)
+                AppendToken(sb, token);
+            return sb.ToReadOnlySeString().ToDalamudString();
+        }
+
+        private static void AppendToken(Lumina.Text.SeStringBuilder sb, MacroToken token)
+        {
+            if (token is TextToken tt)
+            {
+                sb.Append(tt.Text);
+                return;
+            }
+
+            if (token is not MacroTagToken mt)
+                return;
+
+            if (TryHandleColor(sb, mt.Tag) ||
+                TryHandleEdgeColor(sb, mt.Tag) ||
+                TryHandleIcon(sb, mt.Tag) ||
+                TryHandleItalic(sb, mt.Tag))
+                return;
+
+            sb.AppendMacroString($"<{mt.Tag}>");
+        }
+
+        private static bool TryHandleColor(Lumina.Text.SeStringBuilder sb, string tag)
+        {
+            if (tag == "color(stackcolor)")
+            {
+                sb.PopColor();
+                return true;
+            }
+
+            const string gnumPrefix = "color(gnum";
+            if (tag.StartsWith(gnumPrefix) && tag.EndsWith(")"))
+            {
+                var valueStr = tag[gnumPrefix.Length..^1];
+                if (int.TryParse(valueStr, out var value))
+                {
+                    sb.BeginMacro(MacroCode.Color).AppendGlobalNumberExpression(value).EndMacro();
+                    return true;
+                }
+            }
+
+            const string rawPrefix = "color(";
+            if (tag.StartsWith(rawPrefix) && tag.EndsWith(")"))
+            {
+                var valueStr = tag[rawPrefix.Length..^1];
+                if (int.TryParse(valueStr, out var value))
+                {
+                    sb.BeginMacro(MacroCode.Color).AppendIntExpression(value).EndMacro();
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool TryHandleEdgeColor(Lumina.Text.SeStringBuilder sb, string tag)
+        {
+            if (tag == "edgecolor(stackcolor)")
+            {
+                sb.PopEdgeColor();
+                return true;
+            }
+
+            const string gnumPrefix = "edgecolor(gnum";
+            if (tag.StartsWith(gnumPrefix) && tag.EndsWith(")"))
+            {
+                var valueStr = tag[gnumPrefix.Length..^1];
+                if (int.TryParse(valueStr, out var value))
+                {
+                    sb.BeginMacro(MacroCode.EdgeColor).AppendGlobalNumberExpression(value).EndMacro();
+                    return true;
+                }
+            }
+
+            const string rawPrefix = "edgecolor(";
+            if (tag.StartsWith(rawPrefix) && tag.EndsWith(")"))
+            {
+                var valueStr = tag[rawPrefix.Length..^1];
+                if (int.TryParse(valueStr, out var value))
+                {
+                    sb.BeginMacro(MacroCode.EdgeColor).AppendIntExpression(value).EndMacro();
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool TryHandleIcon(Lumina.Text.SeStringBuilder sb, string tag)
+        {
+            const string iconPrefix = "icon(";
+            if (tag.StartsWith(iconPrefix) && tag.EndsWith(")"))
+            {
+                var valueStr = tag[iconPrefix.Length..^1];
+                if (uint.TryParse(valueStr, out var value))
+                {
+                    sb.AppendIcon(value);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private static bool TryHandleItalic(Lumina.Text.SeStringBuilder sb, string tag)
+        {
+            if (tag == "italic(1)")
+            {
+                sb.AppendSetItalic(true);
+                return true;
+            }
+
+            if (tag == "italic(0)")
+            {
+                sb.AppendSetItalic(false);
+                return true;
+            }
+            return false;
+        }
     }
 }

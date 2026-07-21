@@ -15,15 +15,23 @@ namespace RpBuddy.Utils
 
         public readonly RowRef<OnlineStatus> OnlineStatus;
 
+        public readonly IPlayerCharacter? PlayerCharacter;
+
         // Managed Fields
         public readonly string CharacterFirstName;
         public readonly string CharacterLastName;
 
-        public PlayerInfo(string characterName, uint worldId, RowRef<OnlineStatus> onlineStatus)
+        public PlayerInfo(
+            string characterName, 
+            uint worldId, 
+            IPlayerCharacter? playerCharacter, 
+            RowRef<OnlineStatus> onlineStatus
+            )
         {
             CharacterName = characterName;
             WorldId = worldId;
             OnlineStatus = onlineStatus;
+            PlayerCharacter = playerCharacter;
 
             var nameParts = characterName.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
             CharacterFirstName = nameParts.Length > 0 ? nameParts[0] : string.Empty;
@@ -64,7 +72,12 @@ namespace RpBuddy.Utils
             var playerCharacter = GetPlayerCharacterFromPayload(payload);
             if (playerCharacter == null) return null;
 
-            return new PlayerInfo(playerCharacter.Name.TextValue, playerCharacter.HomeWorld.RowId, playerCharacter.OnlineStatus);
+            return new PlayerInfo(
+                playerCharacter.Name.TextValue,
+                playerCharacter.HomeWorld.RowId,
+                playerCharacter,
+                playerCharacter.OnlineStatus
+            );
         }
     }
 }
