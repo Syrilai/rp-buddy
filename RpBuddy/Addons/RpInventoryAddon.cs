@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Text;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using KamiToolKit.BaseTypes;
 using KamiToolKit.Classes;
+using KamiToolKit.ContextMenu;
 using KamiToolKit.Nodes;
 using Lumina.Text.ReadOnly;
 using RpBuddy.Inventory;
@@ -24,9 +27,12 @@ public class RpInventoryAddon : NativeAddon
     private readonly Dictionary<DragDropNode, InventoryItem?> slotContents = [];
     private readonly InventoryBase inventory;
 
+    private readonly ContextMenu _contextMenu;
+
     public RpInventoryAddon()
     {
         inventory = Shared.Inventory;
+        _contextMenu = new ContextMenu();
     }
 
     private void UpdateItemsFromInventory()
@@ -111,8 +117,43 @@ public class RpInventoryAddon : NativeAddon
                 {
                     if (slotContents[slot] is not { } inventoryItem) return;
 
+                    
+                    
                     Shared.Addons.ItemTooltip.Close();
                 };
+                
+                slot.AddEvent(AtkEventType.DragDropClick, (ptr, type, param, @event, data) =>
+                {
+                    var mouseButton = data->DragDropData.MouseButtonId;
+                    var modifiers = data->DragDropData.MouseModifier;
+                    // DragDropData does not expose the mouse position, and ImGui works, as cursed as this is ngl lol
+                    var mousePosition = ImGui.GetIO().MousePos;
+                    
+                    const byte leftMouseButton = 0;
+                    const byte rightMouseButton = 1;
+                    
+                    /*
+                     * Methods:
+                     * - [Shift]       Left   -> Use Item
+                     * -               Right  -> Open Context Menu
+                     *
+                     * Although unsure on the Destroy Item one yet
+                     */
+
+                    switch (mouseButton)
+                    {
+                        case leftMouseButton when (modifiers & ModifierFlag.Shift) == ModifierFlag.Shift:
+                            inventory.UseItem(index);
+                            break;
+                        case rightMouseButton:
+                            _contextMenu.Clear();
+                            _contextMenu.AddItem("Use", () => inventory.UseItem(index));
+                            _contextMenu.AddItem("Discard", () => inventory.DiscardItem(index));
+                            _contextMenu.Open();
+                            
+                            break;
+                    }
+                });
                 
                 slots.Add(slot);
                 slotContents[slot] = null;
@@ -142,11 +183,11 @@ public class RpInventoryAddon : NativeAddon
         var slot = slots[index];
         slotContents[slot] = inventoryItem;
 
-        IPluginLog.Get().Info("Setting contents for {slot} ({index}) with {item}", slot, index, inventoryItem?.Item.Name ?? "None");
+        // IPluginLog.Get().Info("Setting contents for {slot} ({index}) with {item}", slot, index, inventoryItem?.Item.Name ?? "None");
 
         if (inventoryItem is null)
         {
-            IPluginLog.Get().Warning("Slot {slot} ({index}) will be set to empty.", slot, index);
+            // IPluginLog.Get().Warning("Slot {slot} ({index}) will be set to empty.", slot, index);
             slot.Clear();
             slot.QuantityString = string.Empty;
             slot.TextTooltip = default;

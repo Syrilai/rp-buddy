@@ -3,8 +3,10 @@ using System.Linq;
 using Dalamud.Game.Command;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Graphics.Scene;
+using Lumina.Excel.Sheets;
 using RpBuddy.Inventory;
 using Syrilib.Extensions.Dalamud;
+using Syrilib.Extensions.Lumina;
 
 namespace RpBuddy.Services;
 
@@ -59,9 +61,20 @@ public class CommandService : IDisposable
                 
                 IChatGui.Get().Print($"Added {amount}x {item.Name}");
                 break;
+            case "test":
+                Test();
+                break;
             default:
                 Shared.Windows.Main.Toggle();
                 break;
         }
+    }
+
+    private static void Test()
+    {
+        var unlockState = IUnlockState.Get();
+        var rows = Emote.Rows.Where(row => row.Icon > 0).ToList();
+        var unlocked = rows.Count(unlockState.IsEmoteUnlocked);
+        IChatGui.Get().Print($"State: {unlocked}/{rows.Count}");
     }
 }

@@ -171,6 +171,9 @@ public class ChatFeature : IFeature
                 isRoleplaying = playerCharacter.OnlineStatus.RowId == 22;
             }
 
+        if (Shared.Configuration.ChatFeature.RequiresRoleplayingTag && !isRoleplaying)
+            return;
+
         var couldBeEmoteChat = chatMessage.LogKind == XivChatType.Say || startsWithPipe;
         var treatAsEmoteChat =
             Shared.Configuration.ChatFeature.TreatSayAsEmoteForEveryone

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using FFXIVClientStructs.FFXIV.Client.Game.WKS;
 
@@ -19,7 +20,7 @@ public sealed class CustomItemCatalog
         return item;
     }
     
-    public bool TryGet(Guid id, out CustomItem item)
+    public bool TryGet(Guid id, [NotNullWhen(true)] out CustomItem? item)
     {
         return Items.TryGetValue(id, out item!);
     }

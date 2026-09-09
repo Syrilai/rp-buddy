@@ -1,4 +1,6 @@
-﻿namespace RpBuddy.Inventory;
+﻿using FFXIVClientStructs.FFXIV.Client.UI;
+
+namespace RpBuddy.Inventory;
 
 public class LocalInventory : InventoryBase
 {

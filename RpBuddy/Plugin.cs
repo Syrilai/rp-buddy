@@ -5,6 +5,8 @@ using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using RpBuddy.Windows;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using KamiToolKit;
 using KamiToolKit.UiOverlay;
 using Lumina.Excel.Sheets;
@@ -21,17 +23,19 @@ using Syrilib.Extensions.Lumina;
 namespace RpBuddy;
 
 // ReSharper disable once ClassNeverInstantiated.Global
-public sealed class Plugin : IDalamudPlugin
+public sealed class Plugin : IAsyncDalamudPlugin
 {
     [PluginService] internal static IDalamudPluginInterface PluginInterface { get; private set; } = null!;
 
     private readonly WindowSystem _windowSystem = new("RP Buddy");
-    private readonly CommandService _commandService;
-
-    public Plugin()
+    private CommandService? _commandService;
+    
+    public async Task LoadAsync(CancellationToken cancellationToken)
     {
-        KamiToolKitLibrary.Initialize(PluginInterface);
+        await KamiToolKitLibrary.InitializeAsync(PluginInterface);
         SyrilibMain.Initialize(PluginInterface);
+        
+        cancellationToken.ThrowIfCancellationRequested();
         
         Shared.ItemCatalog = new CustomItemCatalog();
         Shared.Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
@@ -41,17 +45,6 @@ public sealed class Plugin : IDalamudPlugin
 
         Shared.Windows.Main = new MainWindow(this);
         Shared.Windows.Config = new ConfigWindow(this);
-        
-        Shared.Addons.RpInventory = new RpInventoryAddon
-        {
-            InternalName = "RpBuddyRpInventory",
-            Title = "RP Inventory"
-        };
-        // Shared.Addons.AddonContextMenu = new ContextMenuAddon
-        // {
-        //     InternalName = "RpBuddyContextMenu",
-        //     Title = ""
-        // };
 
         _windowSystem.AddWindow(Shared.Windows.Main);
         _windowSystem.AddWindow(Shared.Windows.Config);
@@ -62,43 +55,22 @@ public sealed class Plugin : IDalamudPlugin
 
         _commandService = new CommandService();
 
-        IFramework.Get().RunSafely(() =>
+        await IFramework.Get().RunOnTick(() =>
         {
             Shared.OverlayController = new OverlayController();
 
             Shared.Addons.ItemTooltip = new ItemTooltipOverlay();
-            Shared.Addons.ContextMenu = new ContextMenuOverlay();
-            Shared.Addons.ContextMenu.IsVisible = false;
 
             Shared.OverlayController.AddNode(Shared.Addons.ItemTooltip);
-            Shared.OverlayController.AddNode(Shared.Addons.ContextMenu);
-        });
+            
+            Shared.Addons.RpInventory = new RpInventoryAddon
+            {
+                InternalName = "RpBuddyRpInventory",
+                Title = "RP Inventory"
+            };
+        }, cancellationToken: cancellationToken);
         
         SeedInventory();
-    }
-
-    public void Dispose()
-    {
-        PluginInterface.UiBuilder.Draw -= _windowSystem.Draw;
-        PluginInterface.UiBuilder.OpenConfigUi -= ToggleConfigUi;
-        PluginInterface.UiBuilder.OpenMainUi -= ToggleMainUi;
-        
-        _windowSystem.RemoveAllWindows();
-        _commandService.Dispose();
-
-        Shared.Windows.Main.Dispose();
-        Shared.Windows.Config.Dispose();
-        
-        Shared.Addons.RpInventory.Dispose();
-        Shared.Addons.ContextMenu.Dispose();
-
-        // OverlayController owns ItemTooltip — it disposes all registered nodes
-        Shared.OverlayController.Dispose();
-
-        // Ensure library cleanup runs on the game's main framework thread
-        // GetAwaiter().GetResult() is safe — if already on framework thread, it runs inline
-        IFramework.Get().RunOnFrameworkThread(KamiToolKitLibrary.Dispose).GetAwaiter().GetResult();
-        SyrilibMain.Dispose();
     }
 
     private void SeedInventory()
@@ -134,4 +106,28 @@ public sealed class Plugin : IDalamudPlugin
     
     public void ToggleConfigUi() => Shared.Windows.Config.Toggle();
     public void ToggleMainUi() => Shared.Windows.Main.Toggle();
+    
+    public async ValueTask DisposeAsync()
+    {
+        PluginInterface.UiBuilder.Draw -= _windowSystem.Draw;
+        PluginInterface.UiBuilder.OpenConfigUi -= ToggleConfigUi;
+        PluginInterface.UiBuilder.OpenMainUi -= ToggleMainUi;
+
+        _windowSystem.RemoveAllWindows();
+        _commandService?.Dispose();
+
+        Shared.Windows.Main.Dispose();
+        Shared.Windows.Config.Dispose();
+        
+
+        await Shared.Addons.RpInventory.DisposeAsync();
+        await IFramework.Get().RunOnTick(async () =>
+        {
+            Shared.OverlayController.Dispose();
+            
+            await KamiToolKitLibrary.DisposeAsync();
+        });
+
+        SyrilibMain.Dispose();
+    }
 }

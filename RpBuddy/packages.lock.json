@@ -10,15 +10,15 @@
       },
       "DotNet.ReproducibleBuilds": {
         "type": "Direct",
-        "requested": "[2.0.2, )",
-        "resolved": "2.0.2",
-        "contentHash": "VaHoEN6YHp0jXucxm67vfuRy8zo9ufiKSuaZ4ZudRi8xmWcEFMKxfCsg2nvYNvdISFTURDu+IHqADGh53+Bamw=="
+        "requested": "[2.0.5, )",
+        "resolved": "2.0.5",
+        "contentHash": "8LrlvI1KpjjJ4VGSqZ16yoOCKlQnYS+Y8rYNifNrscmVh5anJcF9E4e0NiDP30BHBMUbkoJ5KdcxoRWM7Pz9Aw=="
       },
       "KamiToolKit": {
         "type": "Direct",
-        "requested": "[2.1.9, )",
-        "resolved": "2.1.9",
-        "contentHash": "Kikeo7G7awFSKxKPSSGieDp5lSItRaDwkVICQrYxHOt04TIWYaF1tf5hGjArs8x8HHfAh5wWKRUVaDj5su6QrA=="
+        "requested": "[2.2.38, )",
+        "resolved": "2.2.38",
+        "contentHash": "8B+wcprvj3erE/7mjSVUL8HReY5fupXVoP0JsvNBODw/8nFOzs3y4EzXfTI+rx3sxrALDMZDkyBUDAYzM9na1g=="
       },
       "AllaganLib.GameSheets": {
         "type": "Transitive",
@@ -370,7 +370,6 @@
         "type": "Project",
         "dependencies": {
           "AllaganLib.GameSheets": "[2.2.2, )",
-          "DalamudPackager": "[15.0.0, )",
           "LuminaSupplemental.Excel": "[4.3.3, )"
         }
       }

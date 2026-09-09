@@ -33,8 +33,6 @@ public class SharedWindows
 public class SharedAddons
 {
     public RpInventoryAddon RpInventory { get; set; } = null!;
-    public ContextMenuAddon AddonContextMenu { get; set; } = null!;
 
     public ItemTooltipOverlay ItemTooltip { get; set; } = null!;
-    public ContextMenuOverlay ContextMenu { get; set; } = null!;
 }
