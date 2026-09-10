@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Dalamud.Game.Text;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.UI;
@@ -37,6 +38,32 @@ public class LocalInventory : InventoryBase
 
     public override (NetworkStatus, bool, int?) AddItem(InventoryItem item)
     {
+        // A: Max out existing stacks, then do B
+        for (var i = 0; i < Rows * Columns; i++)
+        {
+            var (_, existing) = GetItem(i);
+            if (existing is null || existing.ItemId != item.ItemId)
+                continue;
+            
+            var spaceLeft = existing.Item.MaxStackSize - existing.Quantity;
+            if (spaceLeft < 0)
+                continue;
+            
+            var amountToMove = Math.Min(spaceLeft, item.Quantity);
+            existing.Quantity += amountToMove;
+            item.Quantity -= amountToMove;
+            
+            NotifyUpdated();
+            Persist();
+            
+            if (item.Quantity <= 0)
+                    return (NetworkStatus.Success, true, i);
+        }
+        
+        if (item.Quantity <= 0)
+            return (NetworkStatus.Success, true, null);
+        
+        // B: Find first free slot for the (remaining) item
         var slot = -1;
         for (var i = 0; i < Rows * Columns; i++)
         {
