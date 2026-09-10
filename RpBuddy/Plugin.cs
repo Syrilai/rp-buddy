@@ -73,7 +73,8 @@ public sealed class Plugin : IAsyncDalamudPlugin
             Shared.Addons.RpInventory = new RpInventoryAddon
             {
                 InternalName = "RpBuddyRpInventory",
-                Title = "RP Inventory"
+                Title = "RP Inventory",
+                Subtitle = "Local"
             };
             Shared.Addons.YesNo = new YesNoAddon
             {
@@ -81,37 +82,6 @@ public sealed class Plugin : IAsyncDalamudPlugin
                 Title = "YesNo"
             };
         }, cancellationToken: cancellationToken);
-    }
-
-    private void SeedInventory()
-    {
-        Shared.ItemCatalog.Register(new CustomItem
-        {
-            Id = Guid.CreateVersion7(),
-            Name = "Tropical Sunset",
-            IconId = 24415,
-            MacroDescription = "Freshly mixed watermelon juice, some lime and apple juice, topped off with a slice of lime.",
-            MaxStackSize = 1,
-            CategoryId = 44,
-            CanBeUsed = true,
-            UseActions = [
-                new ItemCommandAction("delighted"),
-                new ItemCommandAction("em", "swiftly empties the glass of Tropical Sunset."),
-                new ItemDelayedAction(6000, [
-                    new ItemCommandAction("stagger"),
-                    new ItemCommandAction("em", "seems to be hit with a wave of tipsiness. Maybe drinking it so swiftly wasn't a great idea after all..?")
-                ]),
-            ]
-        });
-        
-        foreach (var invItem in Shared.ItemCatalog.GetAll().Select(customItem => new InventoryItem
-                 {
-                     ItemId = customItem.Id,
-                     Quantity = 1
-                 }))
-        {
-            Shared.Inventory.AddItem(invItem);
-        }
     }
     
     public void ToggleConfigUi() => Shared.Windows.Config.Toggle();
