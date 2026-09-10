@@ -29,7 +29,6 @@ public class ItemCatalogWindow : Window, IDisposable
         
         if (ImGui.Button("Open Blank Item Creator"))
         {
-            // TODO open a blank item creator
             Shared.Windows.ItemCreator.OpenBlank();
         }
 
