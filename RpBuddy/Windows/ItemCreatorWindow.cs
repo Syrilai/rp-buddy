@@ -2,13 +2,18 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata.Ecma335;
+using System.Text;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
+using Dalamud.Plugin.Services;
 using Lumina.Excel;
 using Lumina.Excel.Sheets;
+using Newtonsoft.Json;
 using RpBuddy.Inventory;
 using RpBuddy.Inventory.Actions;
+using Syrilib.Extensions.Dalamud;
 using Syrilib.Extensions.Lumina;
 
 namespace RpBuddy.Windows;
@@ -29,6 +34,8 @@ public class ItemCreatorWindow : Window
     private bool _canBeUsed = false;
     private uint _categoryId;
     private List<IItemActionBase> _actions = [];
+
+    private CustomItem? _customItem;
     
     public ItemCreatorWindow() : base("Item Creator###item-creator")
     {
@@ -45,6 +52,7 @@ public class ItemCreatorWindow : Window
         _canBeUsed = item.CanBeUsed;
         _categoryId = item.CategoryId;
         _actions = item.UseActions;
+        _customItem = item;
         
         base.IsOpen = true;
     }
@@ -59,6 +67,7 @@ public class ItemCreatorWindow : Window
         _canBeUsed = false;
         _categoryId = 44;
         _actions = [];
+        _customItem = null;
         
         base.IsOpen = true;
     }
@@ -135,6 +144,64 @@ public class ItemCreatorWindow : Window
                 base.IsOpen = false;
             }
         }
+
+        if (_customItem is not null)
+        {
+            ImGui.SameLine();
+            if (ImGui.Button("Export"))
+            {
+                var json = JsonConvert.SerializeObject(_customItem);
+                var bytes = Encoding.UTF8.GetBytes(json);
+                ImGui.SetClipboardText(Convert.ToBase64String(bytes));
+                INotificationManager.Get().AddNotification(
+                    new Notification
+                    {
+                        Content = "Copied item to clipboard.",
+                        Type = NotificationType.Info,
+                        Title = "Export Success"
+                    }
+                );
+                base.IsOpen = false;
+            }
+        }
+        
+        ImGui.SameLine();
+        if (ImGui.Button("Import"))
+        {
+            var clipboard = ImGui.GetClipboardText();
+            try
+            {
+                var bytes = Convert.FromBase64String(clipboard);
+                var json = Encoding.UTF8.GetString(bytes);
+                var item = JsonConvert.DeserializeObject<CustomItem>(json);
+                if (item is null)
+                {
+                    INotificationManager.Get().AddNotification(
+                        new Notification
+                        {
+                            Content = "Failed to import item: Invalid JSON.",
+                            Type = NotificationType.Error,
+                            Title = "Import Error"
+                        }
+                    );
+                    return;
+                }
+                
+                Shared.ItemCatalog.Register(item);
+                base.IsOpen = false;
+            }
+            catch (Exception exception)
+            {
+                INotificationManager.Get().AddNotification(
+                    new Notification
+                    {
+                        Content = "Failed to import item: " + exception.Message,
+                        Type = NotificationType.Error,
+                        Title = "Import Error"
+                    }
+                );
+            }
+        }
     }
     
     private void DrawActionList(List<IItemActionBase> actions, string idPrefix, float indent = 0f)
@@ -192,7 +259,7 @@ public class ItemCreatorWindow : Window
         ImGui.SetNextItemWidth(200f);
         var arguments = commandAction.Arguments ?? string.Empty;
         if (ImGui.InputText("Arguments", ref arguments, 128))
-            commandAction.Arguments = string.IsNullOrEmpty(arguments) ? null : arguments;
+            commandAction.Arguments = string.IsNullOrEmpty(arguments) ? "" : arguments;
     }
 
     private void DrawDelayedAction(ItemDelayedAction delayedAction, string id)
