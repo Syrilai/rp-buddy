@@ -68,6 +68,11 @@ public sealed class Plugin : IAsyncDalamudPlugin
                 InternalName = "RpBuddyRpInventory",
                 Title = "RP Inventory"
             };
+            Shared.Addons.YesNo = new YesNoAddon
+            {
+                InternalName = "RpBuddyYesNo",
+                Title = "YesNo"
+            };
         }, cancellationToken: cancellationToken);
         
         SeedInventory();
@@ -121,6 +126,7 @@ public sealed class Plugin : IAsyncDalamudPlugin
         
 
         await Shared.Addons.RpInventory.DisposeAsync();
+        await Shared.Addons.YesNo.DisposeAsync();
         await IFramework.Get().RunOnTick(async () =>
         {
             Shared.OverlayController.Dispose();

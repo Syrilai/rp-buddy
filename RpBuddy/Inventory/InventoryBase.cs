@@ -32,5 +32,6 @@ public abstract class InventoryBase
 public enum NetworkStatus
 {
     Success,
+    Pending,
     Failure
 }

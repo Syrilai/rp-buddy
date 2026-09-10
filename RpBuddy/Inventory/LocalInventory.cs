@@ -1,4 +1,11 @@
-﻿using FFXIVClientStructs.FFXIV.Client.UI;
+﻿using Dalamud.Game.Text;
+using Dalamud.Plugin.Services;
+using FFXIVClientStructs.FFXIV.Client.UI;
+using FFXIVClientStructs.FFXIV.Client.UI.Misc;
+using Lumina.Text;
+using RpBuddy.Addons;
+using Syrilib.Extensions.Dalamud;
+using SeString = Dalamud.Game.Text.SeStringHandling.SeString;
 
 namespace RpBuddy.Inventory;
 
@@ -54,9 +61,70 @@ public class LocalInventory : InventoryBase
     {
         if (!IsSlotInRange(slot) || Items[slot] is null)
             return (NetworkStatus.Success, false);
+        
+        var parsedSlot = Items[slot]!;
+        var quantity = parsedSlot.Quantity;
+        var item = parsedSlot.Item;
 
+        var promptText = new SeStringBuilder()
+                         .PushColorType(508)
+                         .PushEdgeColorType(509)
+                         .Append($"Discard {(quantity > 1 ? quantity.ToString() : "the")} ")
+                         .PushColorType(549)
+                         .PushEdgeColorType(550)
+                         .Append(item.Name)
+                         .PopEdgeColorType()
+                         .PopColorType()
+                         .Append("?")
+                         .PopEdgeColorType()
+                         .PopColorType()
+                         .ToReadOnlySeString();
+
+        Shared.Addons.YesNo.QueueSelect(
+            new YesNoAddonConfig
+            {
+                PromptText = promptText,
+                OnConfirm = () => InternalDiscardItem(slot),
+            }
+        );
+        
+        return (NetworkStatus.Pending, true);
+    }
+
+    private (NetworkStatus, bool) InternalDiscardItem(int slot)
+    {
+        if (!IsSlotInRange(slot) || Items[slot] is null)
+            return (NetworkStatus.Success, false);
+        
+        var parsedSlot = Items[slot]!;
+        var quantity = parsedSlot.Quantity;
+        var item = parsedSlot.Item;
+        
         Items[slot] = null;
         NotifyUpdated();
+        
+        var chatText = new SeStringBuilder()
+            .Append("You throw away ")
+            .Append(quantity > 1 ? quantity.ToString() : "a")
+            .Append(" ")
+            .PushColorType(500)
+            .PushEdgeColorType(501)
+            .Append(SeIconChar.LinkMarker.ToIconChar())
+            .PopEdgeColorType()
+            .PopColorType()
+            .PushColorType(549)
+            .PushEdgeColorType(550)
+            .Append(item.Name)
+            .PopEdgeColorType()
+            .PopColorType()
+            .Append(".")
+            .ToReadOnlySeString();
+        
+        IChatGui.Get().Print(new XivChatEntry
+        {
+            Type = XivChatType.SystemMessage,
+            MessageBytes = chatText.Data.ToArray(),
+        });
         
         return (NetworkStatus.Success, true);
     }
