@@ -77,12 +77,6 @@ public class ChatFeature : IFeature
 
     private unsafe void ApplyTargetIndicator(IHandleableChatMessage chatMessage)
     {
-        // TODO Add target indicator back
-        /*
-         * var character = (Character*)playerCharacter.Address;
-                var targetId = character->GetTargetId();
-                var lp = _objectTable.LocalPlayer;
-         */
         if (!Shared.Configuration.ChatFeature.ShowTargetIndicator)
             return;
         
