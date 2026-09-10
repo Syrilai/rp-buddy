@@ -28,6 +28,8 @@ public class SharedWindows
 {
     public MainWindow Main { get; set; } = null!;
     public ConfigWindow Config { get; set; } = null!;
+    public ItemCatalogWindow ItemCatalog { get; set; } = null!;
+    public ItemCreatorWindow ItemCreator { get; set; } = null!;
 }
 
 public class SharedAddons

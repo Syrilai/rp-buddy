@@ -55,7 +55,7 @@ public class CommandService : IDisposable
 
                 Shared.Inventory.AddItem(new InventoryItem
                 {
-                    Item = item,
+                    ItemId = guid,
                     Quantity = amount
                 });
                 
@@ -63,6 +63,9 @@ public class CommandService : IDisposable
                 break;
             case "test":
                 Test();
+                break;
+            case "catalog":
+                Shared.Windows.ItemCatalog.Toggle();
                 break;
             default:
                 Shared.Windows.Main.Toggle();

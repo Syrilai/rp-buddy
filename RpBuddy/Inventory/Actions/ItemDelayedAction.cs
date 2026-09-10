@@ -1,11 +1,18 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
+using RpBuddy.Utils;
 
 namespace RpBuddy.Inventory.Actions;
 
-public class ItemDelayedAction(int delay, ItemActionBase[] actionsToExecute) : ItemActionBase
+[method: JsonConstructor]
+public class ItemDelayedAction(int delay, 
+                               [JsonProperty(ItemConverterType = typeof(ItemActionConverter))]
+                               List<IItemActionBase> actionsToExecute) : IItemActionBase
 {
-    public readonly int Delay = delay;
-    public readonly ItemActionBase[] ActionsToExecute = actionsToExecute;
+    public int Delay { get; set; } = delay;
+    [JsonProperty(ItemConverterType = typeof(ItemActionConverter))]
+    public List<IItemActionBase> ActionsToExecute { get; set; } = actionsToExecute;
     
     public void Execute()
     {

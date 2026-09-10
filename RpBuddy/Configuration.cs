@@ -11,7 +11,9 @@ public class Configuration : IPluginConfiguration
 {
     public int Version { get; set; } = 1;
 
-    public ChatFeatureConfiguration ChatFeature { get; set; } = new();
+    public ChatFeatureConfiguration     ChatFeature { get; set; } = new();
+    public Dictionary<Guid, CustomItem> LocalItems { get; set; }  = [];
+    public InventoryItem?[] LocalInventoryItems { get; set; } = new InventoryItem?[InventoryBase.Rows * InventoryBase.Columns];
 
     public void Save()
     {

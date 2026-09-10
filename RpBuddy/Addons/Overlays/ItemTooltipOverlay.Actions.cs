@@ -27,7 +27,7 @@ public sealed partial class ItemTooltipOverlay
         RecalculateLayout();
     }
 
-    private static ReadOnlySeString BuildActionsString(IReadOnlyList<ItemActionBase> actions)
+    private static ReadOnlySeString BuildActionsString(IReadOnlyList<IItemActionBase> actions)
     {
         var actionString = new SeStringBuilder();
         actionString
@@ -44,7 +44,7 @@ public sealed partial class ItemTooltipOverlay
         return actionString.ToReadOnlySeString();
     }
 
-    private static SeStringBuilder AddActionText(SeStringBuilder text, ItemActionBase action, int spacing = 0, string prefix = "", bool appendNewLine = true)
+    private static SeStringBuilder AddActionText(SeStringBuilder text, IItemActionBase action, int spacing = 0, string prefix = "", bool appendNewLine = true)
     {
         if (appendNewLine)
             text.AppendNewLine();

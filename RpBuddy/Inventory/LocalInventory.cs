@@ -1,4 +1,5 @@
-﻿using Dalamud.Game.Text;
+﻿using System.Linq;
+using Dalamud.Game.Text;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
@@ -11,6 +12,24 @@ namespace RpBuddy.Inventory;
 
 public class LocalInventory : InventoryBase
 {
+    public void LoadFromConfig()
+    {
+        var saved = Shared.Configuration.LocalInventoryItems;
+        for (var i = 0; i < Items.Length && i < saved.Length; i++)
+            Items[i] = saved[i];
+
+        foreach (var inventoryItem in Items.Where(i => i is not null))
+            inventoryItem?.NormalizeQuantity();
+        
+        NotifyUpdated();
+    }
+    
+    private void Persist()
+    {
+        Shared.Configuration.LocalInventoryItems = Items.ToArray();
+        Shared.Configuration.Save();
+    }
+    
     public override (NetworkStatus, InventoryItem?) GetItem(int slot)
     {
         return !IsSlotInRange(slot) ? (NetworkStatus.Success, null) : (NetworkStatus.Success, Items[slot]);
@@ -42,6 +61,7 @@ public class LocalInventory : InventoryBase
 
         Items[slot] = item;
         NotifyUpdated();
+        Persist();
 
         return (NetworkStatus.Success, true);
     }
@@ -53,6 +73,7 @@ public class LocalInventory : InventoryBase
 
         (Items[currentSlot], Items[newSlot]) = (Items[newSlot], Items[currentSlot]);
         NotifyUpdated();
+        Persist();
 
         return (NetworkStatus.Success, true);
     }
@@ -91,7 +112,7 @@ public class LocalInventory : InventoryBase
         return (NetworkStatus.Pending, true);
     }
 
-    private (NetworkStatus, bool) InternalDiscardItem(int slot)
+    private (NetworkStatus, bool) InternalDiscardItem(int slot, bool showChatMessage = true)
     {
         if (!IsSlotInRange(slot) || Items[slot] is null)
             return (NetworkStatus.Success, false);
@@ -102,30 +123,32 @@ public class LocalInventory : InventoryBase
         
         Items[slot] = null;
         NotifyUpdated();
-        
+        Persist();
+
+        if (!showChatMessage) return (NetworkStatus.Success, true);
         var chatText = new SeStringBuilder()
-            .Append("You throw away ")
-            .Append(quantity > 1 ? quantity.ToString() : "a")
-            .Append(" ")
-            .PushColorType(500)
-            .PushEdgeColorType(501)
-            .Append(SeIconChar.LinkMarker.ToIconChar())
-            .PopEdgeColorType()
-            .PopColorType()
-            .PushColorType(549)
-            .PushEdgeColorType(550)
-            .Append(item.Name)
-            .PopEdgeColorType()
-            .PopColorType()
-            .Append(".")
-            .ToReadOnlySeString();
+                       .Append("You throw away ")
+                       .Append(quantity > 1 ? quantity.ToString() : "a")
+                       .Append(" ")
+                       .PushColorType(500)
+                       .PushEdgeColorType(501)
+                       .Append(SeIconChar.LinkMarker.ToIconChar())
+                       .PopEdgeColorType()
+                       .PopColorType()
+                       .PushColorType(549)
+                       .PushEdgeColorType(550)
+                       .Append(item.Name)
+                       .PopEdgeColorType()
+                       .PopColorType()
+                       .Append(".")
+                       .ToReadOnlySeString();
         
         IChatGui.Get().Print(new XivChatEntry
         {
             Type = XivChatType.SystemMessage,
             MessageBytes = chatText.Data.ToArray(),
         });
-        
+
         return (NetworkStatus.Success, true);
     }
 
@@ -136,9 +159,12 @@ public class LocalInventory : InventoryBase
         if (item is null)
             return (NetworkStatus.Success, false);
         
+        if (!item.Item.CanBeUsed)
+            return (NetworkStatus.Success, false);
+        
         foreach (var action in item.Item.UseActions)
             action.Execute();
         
-        return DiscardItem(slot);
+        return InternalDiscardItem(slot, false);
     }
 }

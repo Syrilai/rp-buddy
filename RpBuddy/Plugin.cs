@@ -37,17 +37,24 @@ public sealed class Plugin : IAsyncDalamudPlugin
         
         cancellationToken.ThrowIfCancellationRequested();
         
-        Shared.ItemCatalog = new CustomItemCatalog();
+        
         Shared.Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
+        Shared.ItemCatalog = new CustomItemCatalog();
+        Shared.ItemCatalog.LoadFromConfig();
         Shared.Inventory = new LocalInventory();
+        ((LocalInventory)Shared.Inventory).LoadFromConfig();
 
         Shared.Features.Chat = new ChatFeature();
 
         Shared.Windows.Main = new MainWindow(this);
         Shared.Windows.Config = new ConfigWindow(this);
+        Shared.Windows.ItemCatalog = new ItemCatalogWindow();
+        Shared.Windows.ItemCreator = new ItemCreatorWindow();
 
         _windowSystem.AddWindow(Shared.Windows.Main);
         _windowSystem.AddWindow(Shared.Windows.Config);
+        _windowSystem.AddWindow(Shared.Windows.ItemCatalog);
+        _windowSystem.AddWindow(Shared.Windows.ItemCreator);
 
         PluginInterface.UiBuilder.Draw += _windowSystem.Draw;
         PluginInterface.UiBuilder.OpenConfigUi += ToggleConfigUi;
@@ -74,20 +81,18 @@ public sealed class Plugin : IAsyncDalamudPlugin
                 Title = "YesNo"
             };
         }, cancellationToken: cancellationToken);
-        
-        SeedInventory();
     }
 
     private void SeedInventory()
     {
         Shared.ItemCatalog.Register(new CustomItem
         {
-            Id = Guid.Empty,
+            Id = Guid.CreateVersion7(),
             Name = "Tropical Sunset",
             IconId = 24415,
-            Description = "Freshly mixed watermelon juice, some lime and apple juice, topped off with a slice of lime.",
+            MacroDescription = "Freshly mixed watermelon juice, some lime and apple juice, topped off with a slice of lime.",
             MaxStackSize = 1,
-            Category = ItemUICategory.GetRowRef(44),
+            CategoryId = 44,
             CanBeUsed = true,
             UseActions = [
                 new ItemCommandAction("delighted"),
@@ -101,7 +106,7 @@ public sealed class Plugin : IAsyncDalamudPlugin
         
         foreach (var invItem in Shared.ItemCatalog.GetAll().Select(customItem => new InventoryItem
                  {
-                     Item = customItem,
+                     ItemId = customItem.Id,
                      Quantity = 1
                  }))
         {
@@ -111,6 +116,7 @@ public sealed class Plugin : IAsyncDalamudPlugin
     
     public void ToggleConfigUi() => Shared.Windows.Config.Toggle();
     public void ToggleMainUi() => Shared.Windows.Main.Toggle();
+    public void ToggleItemCatalog() => Shared.Windows.ItemCatalog.Toggle();
     
     public async ValueTask DisposeAsync()
     {
@@ -123,7 +129,7 @@ public sealed class Plugin : IAsyncDalamudPlugin
 
         Shared.Windows.Main.Dispose();
         Shared.Windows.Config.Dispose();
-        
+        Shared.Windows.ItemCatalog.Dispose();
 
         await Shared.Addons.RpInventory.DisposeAsync();
         await Shared.Addons.YesNo.DisposeAsync();

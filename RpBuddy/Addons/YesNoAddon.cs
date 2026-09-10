@@ -23,7 +23,8 @@ public unsafe class YesNoAddon : NativeAddon
 {
     private const float BaseHeight = 96f;
     private const float CheckboxHeight = 29f;
-    
+
+    private bool _isActive = false;
     private ReadOnlySeString _promptText = string.Empty;
     private bool _checkboxConfirm = false;
     private bool _holdButton = false;
@@ -41,6 +42,7 @@ public unsafe class YesNoAddon : NativeAddon
     protected override void OnSetup(AtkUnitBase* addon, Span<AtkValue> atkValueSpan)
     {
         base.OnSetup(addon, atkValueSpan);
+        _isActive = true;
 
         var screenSize = ImGui.GetMainViewport().Size;
         var windowSize = new Vector2(400f, BaseHeight);
@@ -121,8 +123,15 @@ public unsafe class YesNoAddon : NativeAddon
         _cancelButtonNode.OnClick += Close;
     }
 
+    protected override void OnFinalize(AtkUnitBase* addon)
+    {
+        base.OnFinalize(addon);
+        _isActive = false;
+    }
+
     public void QueueSelect(YesNoAddonConfig config)
     {
+        if (_isActive) return;
         _promptText = config.PromptText;
         _checkboxConfirm = config.CheckboxConfirm;
         _holdButton = config.HoldButton;

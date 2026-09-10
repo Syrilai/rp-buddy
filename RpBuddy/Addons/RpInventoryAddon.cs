@@ -113,11 +113,9 @@ public class RpInventoryAddon : NativeAddon
                     inventory.DiscardItem(index);
                 };
 
-                slot.OnClicked += node =>
+                slot.OnClicked += _ =>
                 {
                     if (slotContents[slot] is not { } inventoryItem) return;
-
-                    
                     
                     Shared.Addons.ItemTooltip.Close();
                 };
@@ -131,6 +129,11 @@ public class RpInventoryAddon : NativeAddon
                     
                     const byte leftMouseButton = 0;
                     const byte rightMouseButton = 1;
+
+                    var (_, item) = inventory.GetItem(index);
+
+                    if (item is null)
+                        return;
                     
                     /*
                      * Methods:
@@ -147,7 +150,8 @@ public class RpInventoryAddon : NativeAddon
                             break;
                         case rightMouseButton:
                             _contextMenu.Clear();
-                            _contextMenu.AddItem("Use", () => inventory.UseItem(index));
+                            if (item.Item.CanBeUsed)
+                                _contextMenu.AddItem("Use", () => inventory.UseItem(index));
                             _contextMenu.AddItem("Discard", () => inventory.DiscardItem(index));
                             _contextMenu.Open();
                             

@@ -1,16 +1,18 @@
 ﻿using Dalamud.Plugin.Services;
+using Newtonsoft.Json;
 using Syrilib.Extensions.Dalamud;
 
 namespace RpBuddy.Inventory.Actions;
 
-public class ItemCommandAction(string command, string? arguments = null) : ItemActionBase
+[method: JsonConstructor]
+public class ItemCommandAction(string command, string arguments = "") : IItemActionBase
 {
-    public readonly string Command = command;
-    public readonly string? Arguments = arguments;
-    
+    public string  Command { get; set; } = command;
+    public string Arguments { get; set; } = arguments;
+
     public void Execute()
     {
-        var fullCommand = $"/{Command}{(Arguments is not null ? $" {Arguments}" : "")}";
+        var fullCommand = $"/{Command}{(!string.IsNullOrEmpty(Arguments) ? $" {Arguments}" : "")}";
 
         if (!fullCommand.StartsWith('/'))
         {
